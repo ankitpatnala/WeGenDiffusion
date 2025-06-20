@@ -129,7 +129,13 @@ def main(args):
             samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
 
         samples = vae.decode(samples / 0.18215).sample
-        samples = torch.clamp(127.5 * samples + 128.0, 0, 255).permute(0, 2, 3, 1).to("cpu", dtype=torch.uint8).numpy()
+        #samples = torch.clamp(127.5 * samples + 128.0, 0, 255).permute(0, 2, 3, 1).to("cpu", dtype=torch.uint8).numpy()
+
+        samples = torch.clamp(samples, -1, 1)  # assuming VAE output is in [-1, 1]
+        samples = ((samples + 1) * 127.5).to(torch.uint8)  # shape: [B, 3, H, W]
+        samples = samples.float().mean(dim=1, keepdim=True)  # shape: [B, 1, H, W]
+        samples = torch.nn.functional.interpolate(samples, size=(90, 180), mode='bilinear', align_corners=False)
+        samples = samples.squeeze(1).cpu().numpy().astype(np.uint8)
 
         # Save samples to disk as individual .png files
         for i, sample in enumerate(samples):
@@ -151,13 +157,13 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-XL/2")
     parser.add_argument("--vae",  type=str, choices=["ema", "mse"], default="ema")
     parser.add_argument("--sample-dir", type=str, default="samples")
-    parser.add_argument("--per-proc-batch-size", type=int, default=32)
-    parser.add_argument("--num-fid-samples", type=int, default=50_000)
+    parser.add_argument("--per-proc-batch-size", type=int, default=8)
+    parser.add_argument("--num-fid-samples", type=int, default=50)
     parser.add_argument("--image-size", type=int, choices=[256, 512], default=256)
     parser.add_argument("--num-classes", type=int, default=1000)
     parser.add_argument("--cfg-scale",  type=float, default=1.5)
     parser.add_argument("--num-sampling-steps", type=int, default=250)
-    parser.add_argument("--global-seed", type=int, default=0)
+    parser.add_argument("--global-seed", type=int, default=42)
     parser.add_argument("--tf32", action=argparse.BooleanOptionalAction, default=True,
                         help="By default, use TF32 matmuls. This massively accelerates sampling on Ampere GPUs.")
     parser.add_argument("--ckpt", type=str, default=None,

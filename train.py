@@ -1,3 +1,7 @@
+#################################################################################
+#                          Import Packages                                      #
+#################################################################################
+
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # All rights reserved.
 
@@ -26,14 +30,36 @@ from time import time
 import argparse
 import logging
 import os
-
 from models import DiT_models
 from diffusion import create_diffusion
 from diffusers.models import AutoencoderKL
+from torchvision.transforms import functional as TF
+from torch.utils.data import Dataset, DataLoader
+import xarray as xr
 
+
+
+class MyDataset(Dataset):
+    def __init__(self, data, target, transform=None):
+        self.data = torch.from_numpy(data).float()
+        self.target = torch.from_numpy(target).long()
+        self.transform = transform
+
+    def __getitem__(self, index):
+        x = self.data[index]
+        y = self.target[index]
+        x = x.unsqueeze(0).repeat(3, 1, 1) 
+        x = TF.resize(x, size=[256, 256]) 
+        if self.transform:
+            x = self.transform(x)
+        return x, y
+
+    def __len__(self):
+        return len(self.data)
+    
 
 #################################################################################
-#                             Training Helper Functions                         #
+#                   Training Helper Functions                                   #
 #################################################################################
 
 @torch.no_grad()
@@ -104,7 +130,7 @@ def center_crop_arr(pil_image, image_size):
 
 
 #################################################################################
-#                                  Training Loop                                #
+#                          Training Loop                                        #
 #################################################################################
 
 def main(args):
@@ -154,31 +180,61 @@ def main(args):
     # Setup optimizer (we used default Adam betas=(0.9, 0.999) and a constant learning rate of 1e-4 in our paper):
     opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
 
-    # Setup data:
+    # Load your xarray datasets
+    ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
+    ds_val   = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2012_t2m_era5_4months_2deg.nc")
+
+    train_data = ds_train['t2m'].values
+    val_data = ds_val['t2m'].values
+    train_target = np.zeros((train_data.shape[0],), dtype=int)
+    val_target   = np.zeros((val_data.shape[0],), dtype=int)
+
+    # Setup the transformations
     transform = transforms.Compose([
-        transforms.Lambda(lambda pil_image: center_crop_arr(pil_image, args.image_size)),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], inplace=True)
+        transforms.Normalize(mean=[0.5], std=[0.5])
     ])
-    dataset = ImageFolder(args.data_path, transform=transform)
-    sampler = DistributedSampler(
-        dataset,
+
+    # Initialize datasets
+    train_dataset = MyDataset(train_data, train_target, transform=transform)
+    val_dataset   = MyDataset(val_data, val_target, transform=transform)
+    
+    # Setup DDP samplers
+    train_sampler = DistributedSampler(
+        train_dataset,
         num_replicas=dist.get_world_size(),
         rank=rank,
         shuffle=True,
         seed=args.global_seed
     )
-    loader = DataLoader(
-        dataset,
-        batch_size=int(args.global_batch_size // dist.get_world_size()),
+
+    val_sampler = DistributedSampler(
+        val_dataset,
+        num_replicas=dist.get_world_size(),
+        rank=rank,
         shuffle=False,
-        sampler=sampler,
+        seed=args.global_seed
+    )
+
+    # Setup dataloaders
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=int(args.global_batch_size // dist.get_world_size()),
+        sampler=train_sampler,
         num_workers=args.num_workers,
         pin_memory=True,
         drop_last=True
     )
-    logger.info(f"Dataset contains {len(dataset):,} images ({args.data_path})")
+
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=int(args.global_batch_size // dist.get_world_size()),
+        sampler=val_sampler,
+        num_workers=args.num_workers,
+        pin_memory=True,
+        drop_last=False
+    )
+    logger.info(f"Training samples: {len(train_dataset)}, Validation samples: {len(val_dataset)}")
+
 
     # Prepare models for training:
     update_ema(ema, model.module, decay=0)  # Ensure EMA is initialized with synced weights
@@ -193,9 +249,9 @@ def main(args):
 
     logger.info(f"Training for {args.epochs} epochs...")
     for epoch in range(args.epochs):
-        sampler.set_epoch(epoch)
+        train_sampler.set_epoch(epoch)
         logger.info(f"Beginning epoch {epoch}...")
-        for x, y in loader:
+        for x, y in train_loader:
             x = x.to(device)
             y = y.to(device)
             with torch.no_grad():
@@ -249,11 +305,10 @@ def main(args):
     logger.info("Done!")
     cleanup()
 
-
 if __name__ == "__main__":
     # Default args here will train DiT-XL/2 with the hyperparameters we used in our paper (except training iters).
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-path", type=str, required=True)
+    parser.add_argument("--data-path", type=str, required=False, default="")
     parser.add_argument("--results-dir", type=str, default="results")
     parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-XL/2")
     parser.add_argument("--image-size", type=int, choices=[256, 512], default=256)
@@ -263,7 +318,7 @@ if __name__ == "__main__":
     parser.add_argument("--global-seed", type=int, default=0)
     parser.add_argument("--vae", type=str, choices=["ema", "mse"], default="ema")  # Choice doesn't affect training
     parser.add_argument("--num-workers", type=int, default=4)
-    parser.add_argument("--log-every", type=int, default=100)
-    parser.add_argument("--ckpt-every", type=int, default=50_000)
+    parser.add_argument("--log-every", type=int, default=10)
+    parser.add_argument("--ckpt-every", type=int, default=500)
     args = parser.parse_args()
     main(args)

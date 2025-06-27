@@ -24,4 +24,4 @@ master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_ADDR=${master_addr}
 
 #run the python file
-torchrun --master-addr=$MASTER_ADDR --master-port=$MASTER_PORT sample_ddp.py --ckpt /fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/results/010-DiT-XL-2/checkpoints/0004500.pt
+torchrun --master-addr=$MASTER_ADDR --master-port=$MASTER_PORT sample_ddp.py --ckpt /fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/results/DiT-XL-2/ckpt_0032000.pt

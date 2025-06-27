@@ -148,9 +148,9 @@ class DiT(nn.Module):
     """
     def __init__(
         self,
-        input_size=32,
+        input_size=(90, 180),
         patch_size=2,
-        in_channels=4,
+        in_channels=1,
         hidden_size=1152,
         depth=28,
         num_heads=16,
@@ -160,11 +160,11 @@ class DiT(nn.Module):
         learn_sigma=True,
     ):
         super().__init__()
-        self.learn_sigma = learn_sigma
-        self.in_channels = in_channels
+        self.learn_sigma  = learn_sigma
+        self.in_channels  = in_channels
         self.out_channels = in_channels * 2 if learn_sigma else in_channels
-        self.patch_size = patch_size
-        self.num_heads = num_heads
+        self.patch_size   = patch_size
+        self.num_heads    = num_heads
 
         self.x_embedder = PatchEmbed(input_size, patch_size, in_channels, hidden_size, bias=True)
         self.t_embedder = TimestepEmbedder(hidden_size)
@@ -189,7 +189,10 @@ class DiT(nn.Module):
         self.apply(_basic_init)
 
         # Initialize (and freeze) pos_embed by sin-cos embedding:
-        pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1], int(self.x_embedder.num_patches ** 0.5))
+        grid_size = (self.x_embedder.grid_size[0], self.x_embedder.grid_size[1])
+        assert grid_size[0] * grid_size[1] == self.x_embedder.num_patches       
+        #pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1], int(self.x_embedder.num_patches ** 0.5))
+        pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1], grid_size)
         self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
 
         # Initialize patch_embed like nn.Linear (instead of nn.Conv2d):
@@ -222,12 +225,12 @@ class DiT(nn.Module):
         """
         c = self.out_channels
         p = self.x_embedder.patch_size[0]
-        h = w = int(x.shape[1] ** 0.5)
-        assert h * w == x.shape[1]
+        h, w = self.x_embedder.grid_size
+        assert h * w == x.shape[1], f"Expected {h*w} patches, got {x.shape[1]}"
 
-        x = x.reshape(shape=(x.shape[0], h, w, p, p, c))
-        x = torch.einsum('nhwpqc->nchpwq', x)
-        imgs = x.reshape(shape=(x.shape[0], c, h * p, h * p))
+        imgs = x.reshape(x.shape[0], h, w, p, p, c)
+        imgs = torch.einsum('nhwpqc->nchpwq', imgs)
+        imgs = imgs.reshape(x.shape[0], c, h * p, w * p)
         return imgs
 
     def forward(self, x, t, y):
@@ -277,12 +280,15 @@ def get_2d_sincos_pos_embed(embed_dim, grid_size, cls_token=False, extra_tokens=
     return:
     pos_embed: [grid_size*grid_size, embed_dim] or [1+grid_size*grid_size, embed_dim] (w/ or w/o cls_token)
     """
-    grid_h = np.arange(grid_size, dtype=np.float32)
-    grid_w = np.arange(grid_size, dtype=np.float32)
+    if isinstance(grid_size, int): 
+        grid_h = np.arange(grid_size, dtype=np.float32)
+        grid_w = np.arange(grid_size, dtype=np.float32)
+    else: 
+        grid_h = np.arange(grid_size[0], dtype=np.float32)
+        grid_w = np.arange(grid_size[1], dtype=np.float32)
     grid = np.meshgrid(grid_w, grid_h)  # here w goes first
     grid = np.stack(grid, axis=0)
-
-    grid = grid.reshape([2, 1, grid_size, grid_size])
+    grid = grid.reshape([2, 1, grid_size[0], grid_size[1]])
     pos_embed = get_2d_sincos_pos_embed_from_grid(embed_dim, grid)
     if cls_token and extra_tokens > 0:
         pos_embed = np.concatenate([np.zeros([extra_tokens, embed_dim]), pos_embed], axis=0)

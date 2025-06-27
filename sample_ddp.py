@@ -13,160 +13,163 @@ For a simple single-GPU/CPU sampling script, see sample.py.
 """
 import torch
 import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 from models import DiT_models
 from download import find_model
 from diffusion import create_diffusion
-from diffusers.models import AutoencoderKL
 from tqdm import tqdm
 import os
 from PIL import Image
 import numpy as np
 import math
 import argparse
+import xarray as xr
+from copy import deepcopy
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import json
 
 
-def create_npz_from_sample_folder(sample_dir, num=50_000):
+
+def save_sample(
+    sample,
+    path_prefix,
+    save_png=True,
+    save_npy=True,
+    colormap="plasma",
+    lon_range=(0, 360),
+    lat_range=(-90, 90),
+    temp_min=None,
+    temp_max=None
+):
     """
-    Builds a single .npz file from a folder of .png samples.
+    Save each climate field sample as .npy and/or projected world map .png (Kelvin scale).
+
+    Args:
+        sample (Tensor): (N, C, H, W)
+        path_prefix (str): Output file path prefix.
+        save_png (bool): Save PNG images with Cartopy map.
+        save_npy (bool): Save raw tensor as .npy.
+        colormap (str): Matplotlib colormap (e.g., 'plasma').
+        lon_range (tuple): Longitude span.
+        lat_range (tuple): Latitude span.
+        temp_min (float): Minimum temperature for colormap scaling.
+        temp_max (float): Maximum temperature for colormap scaling.
     """
-    samples = []
-    for i in tqdm(range(num), desc="Building .npz file from samples"):
-        sample_pil = Image.open(f"{sample_dir}/{i:06d}.png")
-        sample_np = np.asarray(sample_pil).astype(np.uint8)
-        samples.append(sample_np)
-    samples = np.stack(samples)
-    assert samples.shape == (num, samples.shape[1], samples.shape[2], 3)
-    npz_path = f"{sample_dir}.npz"
-    np.savez(npz_path, arr_0=samples)
-    print(f"Saved .npz file to {npz_path} [shape={samples.shape}].")
-    return npz_path
+    os.makedirs(os.path.dirname(path_prefix), exist_ok=True)
+    sample = sample.cpu()
+
+    for i in range(sample.size(0)):
+        img_tensor = sample[i]  # (C, H, W)
+
+        # Save raw tensor
+        if save_npy:
+            np.save(f"{path_prefix}_{i}.npy", img_tensor.numpy())
+
+        # Save PNG with map
+        if save_png:
+            img_np = img_tensor.numpy()
+            if img_np.shape[0] == 1:
+                img_np = img_np[0]  # (H, W)
+            else:
+                img_np = np.mean(img_np, axis=0)  # (H, W)
+
+            # Generate lat/lon grid
+            h, w = img_np.shape
+            lons = np.linspace(lon_range[0], lon_range[1], w)
+            lats = np.linspace(lat_range[0], lat_range[1], h)
+            lon_grid, lat_grid = np.meshgrid(lons, lats)
+
+            # Setup figure
+            fig = plt.figure(figsize=(10, 5))
+            ax = plt.axes(projection=ccrs.PlateCarree())
+            ax.set_global()
+            ax.coastlines()
+            ax.set_title(f"Sample {i}", fontsize=10)
+
+            # Normalize using dataset min/max, if provided
+            vmin = temp_min if temp_min is not None else img_np.min()
+            vmax = temp_max if temp_max is not None else img_np.max()
+
+            # Plot
+            im = ax.pcolormesh(lon_grid, lat_grid, img_np, cmap=colormap, shading="auto", transform=ccrs.PlateCarree(), vmin=vmin, vmax=vmax)
+            cbar = plt.colorbar(im, orientation="horizontal", pad=0.05, aspect=50)
+            cbar.set_label("K")  # Kelvin label
+
+            # Save and close
+            plt.savefig(f"{path_prefix}_{i}.png", bbox_inches='tight')
+            plt.close()
 
 
 def main(args):
-    """
-    Run sampling.
-    """
-    torch.backends.cuda.matmul.allow_tf32 = args.tf32  # True: fast but may lead to some small numerical differences
-    assert torch.cuda.is_available(), "Sampling with DDP requires at least one GPU. sample.py supports CPU-only usage"
-    torch.set_grad_enabled(False)
-
-    # Setup DDP:
     dist.init_process_group("nccl")
     rank = dist.get_rank()
     device = rank % torch.cuda.device_count()
-    seed = args.global_seed * dist.get_world_size() + rank
-    torch.manual_seed(seed)
     torch.cuda.set_device(device)
-    print(f"Starting rank={rank}, seed={seed}, world_size={dist.get_world_size()}.")
+    torch.manual_seed(42 + rank)
 
-    if args.ckpt is None:
-        assert args.model == "DiT-XL/2", "Only DiT-XL/2 models are available for auto-download."
-        assert args.image_size in [256, 512]
-        assert args.num_classes == 1000
-
-    # Load model:
-    latent_size = args.image_size // 8
     model = DiT_models[args.model](
-        input_size=latent_size,
-        num_classes=args.num_classes
-    ).to(device)
-    # Auto-download a pre-trained model or load a custom DiT checkpoint from train.py:
-    ckpt_path = args.ckpt or f"DiT-XL-2-{args.image_size}x{args.image_size}.pt"
-    state_dict = find_model(ckpt_path)
-    model.load_state_dict(state_dict)
-    model.eval()  # important!
-    diffusion = create_diffusion(str(args.num_sampling_steps))
-    vae = AutoencoderKL.from_pretrained(f"stabilityai/sd-vae-ft-{args.vae}").to(device)
-    assert args.cfg_scale >= 1.0, "In almost all cases, cfg_scale be >= 1.0"
-    using_cfg = args.cfg_scale > 1.0
+        input_size=args.image_size,
+        num_classes=args.num_classes,
+    )
+    model = DDP(model.to(device), device_ids=[rank])
+    diffusion = create_diffusion(timestep_respacing="250")  # e.g. ddim25 or 250 steps
 
-    # Create folder to save samples:
-    model_string_name = args.model.replace("/", "-")
-    ckpt_string_name = os.path.basename(args.ckpt).replace(".pt", "") if args.ckpt else "pretrained"
-    folder_name = f"{model_string_name}-{ckpt_string_name}-size-{args.image_size}-vae-{args.vae}-" \
-                  f"cfg-{args.cfg_scale}-seed-{args.global_seed}"
-    sample_folder_dir = f"{args.sample_dir}/{folder_name}"
-    if rank == 0:
-        os.makedirs(sample_folder_dir, exist_ok=True)
-        print(f"Saving .png samples at {sample_folder_dir}")
-    dist.barrier()
+    ckpt = torch.load(args.ckpt, map_location="cpu")
+    state_dict = ckpt["model"]
+    if not list(state_dict.keys())[0].startswith("module."):
+        state_dict = {"module." + k: v for k, v in state_dict.items()}
+    model.load_state_dict(state_dict, strict=True)
+    model.eval()
 
-    # Figure out how many samples we need to generate on each GPU and how many iterations we need to run:
-    n = args.per_proc_batch_size
-    global_batch_size = n * dist.get_world_size()
-    # To make things evenly-divisible, we'll sample a bit more than we need and then discard the extra samples:
-    total_samples = int(math.ceil(args.num_fid_samples / global_batch_size) * global_batch_size)
-    if rank == 0:
-        print(f"Total number of images that will be sampled: {total_samples}")
-    assert total_samples % dist.get_world_size() == 0, "total_samples must be divisible by world_size"
-    samples_needed_this_gpu = int(total_samples // dist.get_world_size())
-    assert samples_needed_this_gpu % n == 0, "samples_needed_this_gpu must be divisible by the per-GPU batch size"
-    iterations = int(samples_needed_this_gpu // n)
-    pbar = range(iterations)
-    pbar = tqdm(pbar) if rank == 0 else pbar
-    total = 0
-    for _ in pbar:
-        # Sample inputs:
-        z = torch.randn(n, model.in_channels, latent_size, latent_size, device=device)
-        y = torch.randint(0, args.num_classes, (n,), device=device)
+    batch_size = args.batch_size
+    image_size = args.image_size
 
-        # Setup classifier-free guidance:
-        if using_cfg:
-            z = torch.cat([z, z], 0)
-            y_null = torch.tensor([1000] * n, device=device)
-            y = torch.cat([y, y_null], 0)
-            model_kwargs = dict(y=y, cfg_scale=args.cfg_scale)
-            sample_fn = model.forward_with_cfg
-        else:
-            model_kwargs = dict(y=y)
-            sample_fn = model.forward
+    # Class labels (dummy 0 if unconditional)
+    y = torch.zeros(batch_size, dtype=torch.long).to(device)
 
-        # Sample images:
-        samples = diffusion.p_sample_loop(
-            sample_fn, z.shape, z, clip_denoised=False, model_kwargs=model_kwargs, progress=False, device=device
+    # Sample from diffusion
+    for i in range(args.num_batches):
+        noise = torch.randn(batch_size, 1, image_size[0], image_size[1]).to(device)
+        model_kwargs = dict(y=y)
+        sample = diffusion.p_sample_loop(
+            model,
+            (batch_size, 1, image_size[0], image_size[1]),
+            device=device,
+            clip_denoised=False,
+            model_kwargs=model_kwargs,
         )
-        if using_cfg:
-            samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
 
-        samples = vae.decode(samples / 0.18215).sample
-        #samples = torch.clamp(127.5 * samples + 128.0, 0, 255).permute(0, 2, 3, 1).to("cpu", dtype=torch.uint8).numpy()
+        #with open("t2m_norm_stats.json") as f:
+            #stats = json.load(f)
 
-        samples = torch.clamp(samples, -1, 1)  # assuming VAE output is in [-1, 1]
-        samples = ((samples + 1) * 127.5).to(torch.uint8)  # shape: [B, 3, H, W]
-        samples = samples.float().mean(dim=1, keepdim=True)  # shape: [B, 1, H, W]
-        samples = torch.nn.functional.interpolate(samples, size=(90, 180), mode='bilinear', align_corners=False)
-        samples = samples.squeeze(1).cpu().numpy().astype(np.uint8)
+        #sample = sample * stats["std"] + stats["mean"]
+        out_path = os.path.join(args.output_dir, f"sample_rank{rank}_batch{i}.npy")
+        save_sample(
+            sample,
+            path_prefix=out_path.replace(".npy", ""),
+            save_png=True,
+            save_npy=True,
+            colormap="plasma",
+            lon_range=(0, 360),
+            lat_range=(-90, 90),
+        )
+        if rank == 0:
+            print(f"Saved {out_path}")
 
-        # Save samples to disk as individual .png files
-        for i, sample in enumerate(samples):
-            index = i * dist.get_world_size() + rank + total
-            Image.fromarray(sample).save(f"{sample_folder_dir}/{index:06d}.png")
-        total += global_batch_size
-
-    # Make sure all processes have finished saving their samples before attempting to convert to .npz
-    dist.barrier()
-    if rank == 0:
-        create_npz_from_sample_folder(sample_folder_dir, args.num_fid_samples)
-        print("Done.")
     dist.barrier()
     dist.destroy_process_group()
 
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-XL/2")
-    parser.add_argument("--vae",  type=str, choices=["ema", "mse"], default="ema")
-    parser.add_argument("--sample-dir", type=str, default="samples")
-    parser.add_argument("--per-proc-batch-size", type=int, default=8)
-    parser.add_argument("--num-fid-samples", type=int, default=50)
-    parser.add_argument("--image-size", type=int, choices=[256, 512], default=256)
+    parser.add_argument("--ckpt", type=str, required=True)
+    parser.add_argument("--model", type=str, default="DiT-XL/2", choices=list(DiT_models.keys()))
+    parser.add_argument("--image-size", type=int, nargs=2, default=(90, 180))
     parser.add_argument("--num-classes", type=int, default=1000)
-    parser.add_argument("--cfg-scale",  type=float, default=1.5)
-    parser.add_argument("--num-sampling-steps", type=int, default=250)
-    parser.add_argument("--global-seed", type=int, default=42)
-    parser.add_argument("--tf32", action=argparse.BooleanOptionalAction, default=True,
-                        help="By default, use TF32 matmuls. This massively accelerates sampling on Ampere GPUs.")
-    parser.add_argument("--ckpt", type=str, default=None,
-                        help="Optional path to a DiT checkpoint (default: auto-download a pre-trained DiT-XL/2 model).")
+    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--num-batches", type=int, default=10)
+    parser.add_argument("--output-dir", type=str, default="/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/samples")
     args = parser.parse_args()
     main(args)

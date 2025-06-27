@@ -1,102 +1,0 @@
-+ ml GCCcore/13.3.0 Python/3.12.3-GCCcore-13.3.0
-++ /usr/share/lmod/lmod/libexec/ml_cmd GCCcore/13.3.0 Python/3.12.3-GCCcore-13.3.0
-+ eval 'module  load '\''GCCcore/13.3.0'\'' '\''Python/3.12.3-GCCcore-13.3.0'\'''
-++ module load GCCcore/13.3.0 Python/3.12.3-GCCcore-13.3.0
-++ '[' -z '' ']'
-++ case "$-" in
-++ __lmod_sh_dbg=x
-++ '[' -n x ']'
-++ set +x
-Shell debugging temporarily silenced: export LMOD_SH_DBG_ON=1 for Lmod's output
-Shell debugging restarted
-++ unset __lmod_sh_dbg
-++ return 0
-+ export OMP_NUM_THREADS=12
-+ OMP_NUM_THREADS=12
-+ export SRUN_CPUS_PER_TASK=12
-+ SRUN_CPUS_PER_TASK=12
-+ source /fast/home/nishant.kumar/venv_python_3.10/bin/activate
-++ deactivate nondestructive
-++ '[' -n '' ']'
-++ '[' -n '' ']'
-++ hash -r
-++ '[' -n '' ']'
-++ unset VIRTUAL_ENV
-++ unset VIRTUAL_ENV_PROMPT
-++ '[' '!' nondestructive = nondestructive ']'
-++ '[' linux-gnu = cygwin ']'
-++ '[' linux-gnu = msys ']'
-++ export VIRTUAL_ENV=/fast/home/nishant.kumar/venv_python_3.10
-++ VIRTUAL_ENV=/fast/home/nishant.kumar/venv_python_3.10
-++ _OLD_VIRTUAL_PATH=/fast/service/apps/software/Python/3.12.3-GCCcore-13.3.0/bin:/fast/service/apps/software/OpenSSL/3/bin:/fast/service/apps/software/XZ/5.4.5-GCCcore-13.3.0/bin:/fast/service/apps/software/SQLite/3.45.3-GCCcore-13.3.0/bin:/fast/service/apps/software/Tcl/8.6.14-GCCcore-13.3.0/bin:/fast/service/apps/software/ncurses/6.5-GCCcore-13.3.0/bin:/fast/service/apps/software/bzip2/1.0.8-GCCcore-13.3.0/bin:/fast/service/apps/software/binutils/2.42-GCCcore-13.3.0/bin:/fast/service/apps/software/GCCcore/13.3.0/bin:/fast/home/nishant.kumar/venv_python_3.10/bin:/home/nishant.kumar/miniconda3/bin:/home/nishant.kumar/.local/bin:/home/nishant.kumar/bin:/usr/share/Modules/bin:/opt/miniforge3/condabin:/opt/miniforge3/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin
-++ PATH=/fast/home/nishant.kumar/venv_python_3.10/bin:/fast/service/apps/software/Python/3.12.3-GCCcore-13.3.0/bin:/fast/service/apps/software/OpenSSL/3/bin:/fast/service/apps/software/XZ/5.4.5-GCCcore-13.3.0/bin:/fast/service/apps/software/SQLite/3.45.3-GCCcore-13.3.0/bin:/fast/service/apps/software/Tcl/8.6.14-GCCcore-13.3.0/bin:/fast/service/apps/software/ncurses/6.5-GCCcore-13.3.0/bin:/fast/service/apps/software/bzip2/1.0.8-GCCcore-13.3.0/bin:/fast/service/apps/software/binutils/2.42-GCCcore-13.3.0/bin:/fast/service/apps/software/GCCcore/13.3.0/bin:/fast/home/nishant.kumar/venv_python_3.10/bin:/home/nishant.kumar/miniconda3/bin:/home/nishant.kumar/.local/bin:/home/nishant.kumar/bin:/usr/share/Modules/bin:/opt/miniforge3/condabin:/opt/miniforge3/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin
-++ export PATH
-++ '[' -n '' ']'
-++ '[' -z '' ']'
-++ _OLD_VIRTUAL_PS1=
-++ PS1='(venv_python_3.10) '
-++ export PS1
-++ VIRTUAL_ENV_PROMPT='(venv_python_3.10) '
-++ export VIRTUAL_ENV_PROMPT
-++ hash -r
-+ export CUDA_VISIBLE_DEVICES=0,1,2,3
-+ CUDA_VISIBLE_DEVICES=0,1,2,3
-+ export MASTER_PORT=12341
-+ MASTER_PORT=12341
-++ scontrol show hostnames hai001
-++ head -n 1
-+ master_addr=hai001
-+ export MASTER_ADDR=hai001
-+ MASTER_ADDR=hai001
-+ torchrun --master-addr=hai001 --master-port=12341 sample_ddp.py --ckpt /fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/results/010-DiT-XL-2/checkpoints/0004500.pt
-Starting rank=0, seed=42, world_size=1.
-/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/download.py:26: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
-  checkpoint = torch.load(model_name, map_location=lambda storage, loc: storage)
-Saving .png samples at samples/DiT-XL-2-0004500-size-256-vae-ema-cfg-1.5-seed-42
-[rank0]:[W620 18:51:31.282850020 ProcessGroupNCCL.cpp:4115] [PG ID 0 PG GUID 0 Rank 0]  using GPU 0 to perform barrier as devices used by this process are currently unknown. This can potentially cause a hang if this rank to GPU mapping is incorrect.Specify device_ids in barrier() to force use of a particular device,or call init_process_group() with a device_id.
-Total number of images that will be sampled: 56
-  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:07<00:47,  7.85s/it] 29%|██▊       | 2/7 [00:15<00:38,  7.69s/it] 43%|████▎     | 3/7 [00:23<00:30,  7.64s/it] 57%|█████▋    | 4/7 [00:30<00:22,  7.61s/it] 71%|███████▏  | 5/7 [00:38<00:15,  7.60s/it] 86%|████████▌ | 6/7 [00:45<00:07,  7.59s/it]100%|██████████| 7/7 [00:53<00:00,  7.59s/it]100%|██████████| 7/7 [00:53<00:00,  7.62s/it]
-Building .npz file from samples:   0%|          | 0/50 [00:00<?, ?it/s]Building .npz file from samples: 100%|██████████| 50/50 [00:00<00:00, 1074.24it/s]
-[rank0]: Traceback (most recent call last):
-[rank0]:   File "/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/sample_ddp.py", line 172, in <module>
-[rank0]:     main(args)
-[rank0]:   File "/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/sample_ddp.py", line 149, in main
-[rank0]:     create_npz_from_sample_folder(sample_folder_dir, args.num_fid_samples)
-[rank0]:   File "/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/sample_ddp.py", line 38, in create_npz_from_sample_folder
-[rank0]:     assert samples.shape == (num, samples.shape[1], samples.shape[2], 3)
-[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[rank0]: AssertionError
-[rank0]:[W620 18:52:25.216868624 ProcessGroupNCCL.cpp:1250] Warning: WARNING: process group has NOT been destroyed before we destruct ProcessGroupNCCL. On normal program exit, the application should call destroy_process_group to ensure that any pending NCCL operations have finished in this process. In rare cases this process can exit before this point and block the progress of another member of the process group. This constraint has always been present,  but this warning has only been added since PyTorch 2.4 (function operator())
-E0620 18:52:26.846000 100310 torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 100521) of binary: /fast/home/nishant.kumar/venv_python_3.10/bin/python3
-Traceback (most recent call last):
-  File "/fast/home/nishant.kumar/venv_python_3.10/bin/torchrun", line 8, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "/fast/home/nishant.kumar/venv_python_3.10/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
-    return f(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^
-  File "/fast/home/nishant.kumar/venv_python_3.10/lib/python3.12/site-packages/torch/distributed/run.py", line 919, in main
-    run(args)
-  File "/fast/home/nishant.kumar/venv_python_3.10/lib/python3.12/site-packages/torch/distributed/run.py", line 910, in run
-    elastic_launch(
-  File "/fast/home/nishant.kumar/venv_python_3.10/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
-    return launch_agent(self._config, self._entrypoint, list(args))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/fast/home/nishant.kumar/venv_python_3.10/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
-    raise ChildFailedError(
-torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
-============================================================
-sample_ddp.py FAILED
-------------------------------------------------------------
-Failures:
-  <NO_OTHER_FAILURES>
-------------------------------------------------------------
-Root Cause (first observed failure):
-[0]:
-  time      : 2025-06-20_18:52:26
-  host      : hai001.haicore.berlin
-  rank      : 0 (local_rank: 0)
-  exitcode  : 1 (pid: 100521)
-  error_file: <N/A>
-  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
-============================================================

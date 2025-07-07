@@ -1,0 +1,71 @@
+[project]
+name = "DiT_for_MLESM_hackathon"
+version = "0.1.0"
+description = "A project related to Diffusion Transformers (DiT) as per environment.yml dependencies."
+requires-python = ">=3.8,<3.13"
+authors = [
+    { name = "Ankit Patnala", email = "a.patnala@fz-juelich.de" },
+    { name = "Nishant Kumar", email = "nishant.kumar@hereon.de" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+dependencies = [
+    "torch>=1.13",
+    "torchvision",
+    "timm",
+    "diffusers",
+    "accelerate"
+]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

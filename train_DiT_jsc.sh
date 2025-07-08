@@ -1,11 +1,14 @@
-#!/bin/bash -x
-#SBATCH --job-name=fancy
+#!/bin/bash
+#SBATCH --job-name=dit_t2m
 #SBATCH --time=1-00:00:00
+#SBATCH --account=hclimrep
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=8
+#SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:8
-#SBATCH --partition=standard
+#SBATCH --gres=gpu:4
+#SBATCH --partition=booster
+#SBATCH --output=./logs/%x.%j.out
+#SBATCH --error=./logs/%x.%j.err
 
 ml GCCcore/13.3.0 Python/3.12.3-GCCcore-13.3.0
 
@@ -14,11 +17,13 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 export SRUN_CPUS_PER_TASK="${SLURM_CPUS_PER_TASK}"
 
 #activate virtual environment
-source /fast/home/nishant.kumar/venv_python_3.10/bin/activate
+source .venv/bin/activate
 
 export CUDA_VISIBLE_DEVICES="0,1,2,3,5,6,7"
+export NCCL_SOCKET_IFNAME=ib0
 export MASTER_PORT=12340
 master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_ADDR=${master_addr}
 
-torchrun train.py --global-batch-size 4
+#torchrun train.py --global-batch-size 4
+srun --overlap python train.py --global-batch-size 4

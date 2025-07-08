@@ -32,6 +32,7 @@ from models import DiT_models
 from diffusion import create_diffusion
 from torch.utils.data import Dataset, DataLoader
 import xarray as xr
+from init_ddp import init_distributed_mode
 import json
 
 
@@ -87,7 +88,8 @@ def create_logger(log_path=None):
 #################################################################################
 
 def main(args):
-    dist.init_process_group("nccl")
+    #dist.init_process_group("nccl")
+    init_distributed_mode()
     rank = dist.get_rank()
     device = rank % torch.cuda.device_count()
     torch.cuda.set_device(device)
@@ -109,7 +111,8 @@ def main(args):
     diffusion = create_diffusion(timestep_respacing="")
     opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
 
-    ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
+    #ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
+    ds_train = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
     x_train = ds_train['t2m'].values
     #t2m_mean = float(x_train.mean())
     #t2m_std = float(x_train.std())
@@ -172,7 +175,7 @@ def main(args):
                 ckpt_path = os.path.join(experiment_path, f"ckpt_{steps:07d}.pt")
                 torch.save({"model": model.module.state_dict(), "ema": ema.state_dict(), "opt": opt.state_dict()}, ckpt_path)
                 logger.info(f"Checkpoint saved to {ckpt_path}")
-                dist.barrier()
+            dist.barrier()
 
     model.eval()
     logger.info("Training complete.")

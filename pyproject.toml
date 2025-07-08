@@ -14,7 +14,9 @@ dependencies = [
     "torchvision",
     "timm",
     "diffusers",
-    "accelerate"
+    "accelerate",
+    "xarray",
+    "netcdf4"
 ]
 
 

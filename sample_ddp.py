@@ -27,6 +27,7 @@ import xarray as xr
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
+from init_ddp import init_distributed_mode
 import json
 
 
@@ -102,7 +103,8 @@ def save_sample(
 
 
 def main(args):
-    dist.init_process_group("nccl")
+    #dist.init_process_group("nccl")
+    init_distributed_mode()
     rank = dist.get_rank()
     device = rank % torch.cuda.device_count()
     torch.cuda.set_device(device)

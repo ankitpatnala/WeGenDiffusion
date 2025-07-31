@@ -16,7 +16,9 @@ dependencies = [
     "diffusers",
     "accelerate",
     "xarray",
-    "netcdf4"
+    "netcdf4",
+    "matplotlib",
+    "cartopy>=0.21.1",
 ]
 
 

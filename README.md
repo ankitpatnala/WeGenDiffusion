@@ -1,108 +1,39 @@
 ## Codebase for the implementation of Diffusion Transformers to generate temperature maps
 
-This code is build on original implmentation of Scalable Diffusion Models with Transformers (DiT)<br><sub>Official PyTorch Implementation</sub>
+This code is built on the original implementation of Scalable Diffusion Models with Transformers (DiT)<br><sub>Official PyTorch Implementation</sub>
 
-This repo contains PyTorch model definitions, description and training/sampling code for our implementation of generating temperature maps 
-diffusion models with transformers (DiTs). You can find more visualizations on our [project page](https://www.wpeebles.com/DiT).
+This repo contains PyTorch model definitions, description, and training/sampling code for our implementation of generating temperature maps 
+diffusion models with transformers (DiTs).
 
 
-We train latent diffusion models, replacing the commonly-used U-Net backbone with a transformer that operates on 
-latent patches. We analyze the scalability of our Diffusion Transformers (DiTs) through the lens of forward pass 
-complexity as measured by Gflops. We find that DiTs with higher Gflops---through increased transformer depth/width or
-increased number of input tokens---consistently have lower FID. In addition to good scalability properties, our 
-DiT-XL/2 models outperform all prior diffusion models on the class-conditional ImageNet 512×512 and 256×256 benchmarks, 
-achieving a state-of-the-art FID of 2.27 on the latter.
+We train diffusion models, replacing the commonly-used U-Net backbone with a transformer that operates on 
+patches. 
 
 
 ## Setup
 
-First, download and set up the repo:
+Login to JURECA system
 
-```bash
-git clone https://github.com/facebookresearch/DiT.git
-cd DiT
-```
+Load `uv` with command `ml uv`
 
-We provide an [`environment.yml`](environment.yml) file that can be used to create a Conda environment. If you only want 
-to run pre-trained models locally on CPU, you can remove the `cudatoolkit` and `pytorch-cuda` requirements from the file.
-
-```bash
-conda env create -f environment.yml
-conda activate DiT
-```
-
-
-## Sampling [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/wpeebles/DiT) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](http://colab.research.google.com/github/facebookresearch/DiT/blob/main/run_DiT.ipynb)
-![More DiT samples](visuals/sample_grid_1.png)
-
-**Pre-trained DiT checkpoints.** You can sample from our pre-trained DiT models with [`sample.py`](sample.py). Weights for our pre-trained DiT model will be 
-automatically downloaded depending on the model you use. The script has various arguments to switch between the 256x256
-and 512x512 models, adjust sampling steps, change the classifier-free guidance scale, etc. For example, to sample from
-our 512x512 DiT-XL/2 model, you can use:
-
-```bash
-python sample.py --image-size 512 --seed 1
-```
-
-For convenience, our pre-trained DiT models can be downloaded directly here as well:
-
-| DiT Model     | Image Resolution | FID-50K | Inception Score | Gflops | 
-|---------------|------------------|---------|-----------------|--------|
-| [XL/2](https://dl.fbaipublicfiles.com/DiT/models/DiT-XL-2-256x256.pt) | 256x256          | 2.27    | 278.24          | 119    |
-| [XL/2](https://dl.fbaipublicfiles.com/DiT/models/DiT-XL-2-512x512.pt) | 512x512          | 3.04    | 240.82          | 525    |
-
-
-**Custom DiT checkpoints.** If you've trained a new DiT model with [`train.py`](train.py) (see [below](#training-dit)), you can add the `--ckpt`
-argument to use your own checkpoint instead. For example, to sample from the EMA weights of a custom 
-256x256 DiT-L/4 model, run:
-
-```bash
-python sample.py --model DiT-L/4 --image-size 256 --ckpt /path/to/model.pt
-```
-
+Run command `uv sync` to create virtual environment
 
 ## Training DiT
 
-We provide a training script for DiT in [`train.py`](train.py). This script can be used to train class-conditional 
-DiT models, but it can be easily modified to support other types of conditioning. To launch DiT-XL/2 (256x256) training with `N` GPUs on 
-one node:
+The training script for DiT is  [`train.py`](train.py). This script can be used to train class-conditional 
+DiT models, but it can be easily modified to support other types of conditioning. To launch training
 
-```bash
-torchrun --nnodes=1 --nproc_per_node=N train.py --model DiT-XL/2 --data-path /path/to/imagenet/train
 ```
+sbatch train_DiT_jsc.sh
 
-### PyTorch Training Results
+```
+## Sampling DiT
 
-We've trained DiT-XL/2 and DiT-B/4 models from scratch with the PyTorch training script
-to verify that it reproduces the original JAX results up to several hundred thousand training iterations. Across our experiments, the PyTorch-trained models give 
-similar (and sometimes slightly better) results compared to the JAX-trained models up to reasonable random variation. Some data points:
+The sampling script is [`sample_ddp.py`](sample_ddp.py). The script will generate samples from scratch. 
 
-| DiT Model  | Train Steps | FID-50K<br> (JAX Training) | FID-50K<br> (PyTorch Training) | PyTorch Global Training Seed |
-|------------|-------------|----------------------------|--------------------------------|------------------------------|
-| XL/2       | 400K        | 19.5                       | **18.1**                       | 42                           |
-| B/4        | 400K        | **68.4**                   | 68.9                           | 42                           |
-| B/4        | 400K        | 68.4                       | **68.3**                       | 100                          |
-
-These models were trained at 256x256 resolution; we used 8x A100s to train XL/2 and 4x A100s to train B/4. Note that FID 
-here is computed with 250 DDPM sampling steps, with the `mse` VAE decoder and without guidance (`cfg-scale=1`). 
-
-**TF32 Note (important for A100 users).** When we ran the above tests, TF32 matmuls were disabled per PyTorch's defaults. 
-We've enabled them at the top of `train.py` and `sample.py` because it makes training and sampling way way way faster on 
-A100s (and should for other Ampere GPUs too), but note that the use of TF32 may lead to some differences compared to 
-the above results.
-
-### Enhancements
-Training (and sampling) could likely be sped-up significantly by:
-- [ ] using [Flash Attention](https://github.com/HazyResearch/flash-attention) in the DiT model
-- [ ] using `torch.compile` in PyTorch 2.0
-
-Basic features that would be nice to add:
-- [ ] Monitor FID and other metrics
-- [ ] Generate and save samples from the EMA model periodically
-- [ ] Resume training from a checkpoint
-- [ ] AMP/bfloat16 support
-
-**🔥 Feature Update** Check out this repository at https://github.com/chuanyangjin/fast-DiT to preview a selection of training speed acceleration and memory saving features including gradient checkpointing, mixed precision training and pre-extrated VAE features. With these advancements, we have achieved a training speed of 0.84 steps/sec for DiT-XL/2 using just a single A100 GPU.
+```
+sbatch test_DiT.sh
+```
 
 ## Evaluation (FID, Inception Score, etc.)
 
@@ -111,11 +42,6 @@ generates a folder of samples as well as a `.npz` file which can be directly use
 evaluation suite](https://github.com/openai/guided-diffusion/tree/main/evaluations) to compute FID, Inception Score and
 other metrics. For example, to sample 50K images from our pre-trained DiT-XL/2 model over `N` GPUs, run:
 
-```bash
-torchrun --nnodes=1 --nproc_per_node=N sample_ddp.py --model DiT-XL/2 --num-fid-samples 50000
-```
-
-There are several additional options; see [`sample_ddp.py`](sample_ddp.py) for details. 
 
 
 ## License

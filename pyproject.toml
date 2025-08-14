@@ -19,6 +19,7 @@ dependencies = [
     "netcdf4",
     "matplotlib",
     "cartopy>=0.21.1",
+    "ipykernel>=6.29.5",
 ]
 
 

@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=dit_t2m
 #SBATCH --time=1-00:00:00
-#SBATCH --account=hclimrep
+#SBATCH --account=training2533
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
-#SBATCH --partition=booster
+#SBATCH --partition=dc-gpu
 #SBATCH --output=./logs/%x.%j.out
 #SBATCH --error=./logs/%x.%j.err
 

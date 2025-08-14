@@ -34,6 +34,9 @@ The sampling script is [`sample_ddp.py`](sample_ddp.py). The script will generat
 ```
 sbatch test_DiT.sh
 ```
+Here is a sample generated temperature map.
+
+![sample 1](samples/sample_rank0_batch0_0.png)
 
 ## Evaluation (FID, Inception Score, etc.)
 

@@ -26,4 +26,4 @@ master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_ADDR=${master_addr}
 
 #torchrun train.py --global-batch-size 4
-srun --overlap python train.py --global-batch-size 4
+srun --overlap python train.py --global-batch-size 4 --epochs=50

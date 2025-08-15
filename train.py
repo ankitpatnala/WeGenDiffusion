@@ -32,22 +32,26 @@ from models import DiT_models
 from diffusion import create_diffusion
 from torch.utils.data import Dataset, DataLoader
 import xarray as xr
+import numpy as np
 from init_ddp import init_distributed_mode
 import json
 
-
-class MyDataset(Dataset):
-    def __init__(self, data, target):#, mean, std):
+class NetCDFDataset(Dataset):
+    def __init__(self, data_filepath, labels=None, variables=["t2m"]):#, mean, std):
         #self.data = (data - mean) / std
-        self.data = data
-        self.target = target
+        self.data = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
+        self.vars = variables
+        if labels is None:
+            self.target = np.zeros(len(self.data['valid_time']))
+        else:
+            pass
     def __getitem__(self, index):
-        x = torch.from_numpy(self.data[index]).float()
+        x = np.concat([np.expand_dims(self.data.isel(valid_time=index)[var].values,axis=0) 
+                        for var in self.vars])
         y = torch.tensor(self.target[index], dtype=torch.long)
         return x, y
     def __len__(self):
-        return len(self.data)
-    
+        return len(self.data['valid_time'])
 
 def update_ema(ema_model, model, decay=0.9999):
     with torch.no_grad():
@@ -56,15 +60,12 @@ def update_ema(ema_model, model, decay=0.9999):
         for name, param in model_params.items():
             ema_params[name].mul_(decay).add_(param.data, alpha=1 - decay)
 
-
 def requires_grad(model, flag=True):
     for p in model.parameters():
         p.requires_grad = flag
 
-
 def cleanup():
     dist.destroy_process_group()
-
 
 def create_logger(log_path=None):
     if dist.get_rank() == 0:
@@ -112,16 +113,9 @@ def main(args):
     opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
 
     #ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
-    ds_train = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
-    x_train = ds_train['t2m'].values
-    #t2m_mean = float(x_train.mean())
-    #t2m_std = float(x_train.std())
-    #with open("t2m_norm_stats.json", "w") as f:
-        #json.dump({"mean": t2m_mean, "std": t2m_std}, f)
-
-    y_train = np.zeros(len(x_train))
-
-    train_dataset = MyDataset(x_train, y_train)#, mean=t2m_mean, std=t2m_std)
+    train_filepath = "./data/2011_t2m_era5_2deg.nc"
+    #ds_train = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
+    train_dataset = NetCDFDataset(train_filepath)
 
     train_sampler = DistributedSampler(
         train_dataset, 
@@ -148,7 +142,7 @@ def main(args):
 
     for epoch in range(args.epochs):
         train_sampler.set_epoch(epoch)
-        for x, y in train_loader:
+        for i, (x, y) in enumerate(train_loader):
             x, y = x.to(device), y.to(device)
             if x.ndim == 3:
                 x = x.unsqueeze(1)
@@ -163,6 +157,8 @@ def main(args):
             running_loss += loss.item()
             steps += 1
 
+            print("step_number: ", i)
+
             if steps % args.log_every == 0:
                 torch.cuda.synchronize()
                 avg_loss = torch.tensor(running_loss / args.log_every, device=device)
@@ -171,11 +167,13 @@ def main(args):
                 logger.info(f"Epoch {epoch} Step {steps}: Loss = {avg_loss:.4f}, Steps/sec = {args.log_every / (time() - start):.2f}")
                 running_loss, start = 0, time()
 
-            if steps % args.ckpt_every == 0 and rank == 0:
-                ckpt_path = os.path.join(experiment_path, f"ckpt_{steps:07d}.pt")
-                torch.save({"model": model.module.state_dict(), "ema": ema.state_dict(), "opt": opt.state_dict()}, ckpt_path)
-                logger.info(f"Checkpoint saved to {ckpt_path}")
             dist.barrier()
+
+        if epoch  % args.ckpt_every == 0 and rank == 0:
+            ckpt_path = os.path.join(experiment_path, f"ckpt_{epoch:07d}.pt")
+            torch.save({"model": model.module.state_dict(), "ema": ema.state_dict(), "opt": opt.state_dict()}, ckpt_path)
+            logger.info(f"Checkpoint saved to {ckpt_path}")
+
 
     model.eval()
     logger.info("Training complete.")
@@ -187,7 +185,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--data-path", type=str, required=False, default="")
     parser.add_argument("--results-dir", type=str, default="results")
-    parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-XL/2")
+    parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-S/2")
     parser.add_argument("--image-size", type=int, default=(90,180))
     parser.add_argument("--num-classes", type=int, default=1000)
     parser.add_argument("--epochs", type=int, default=2000)
@@ -196,6 +194,6 @@ if __name__ == "__main__":
     parser.add_argument("--vae", type=str, choices=["ema", "mse"], default="ema")  # Choice doesn't affect training
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--log-every", type=int, default=10)
-    parser.add_argument("--ckpt-every", type=int, default=500)
+    parser.add_argument("--ckpt-every", type=int, default=1)
     args = parser.parse_args()
     main(args)

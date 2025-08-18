@@ -48,6 +48,9 @@ other metrics. For example, to sample 50K images from our pre-trained DiT-XL/2 m
 ## Group Tasks
 
 Team 1: Implement Evaluation Metrics
+
 Team 2: Conditioning based on seasonal forcings 
+
 Team 3: Conditioning based on seasonal forcings + Day + Hour
+
 Team 4: Conditioning based on temperature from previous time steps

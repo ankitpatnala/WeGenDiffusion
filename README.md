@@ -1,6 +1,6 @@
 ## Codebase for the implementation of Diffusion Transformers to generate temperature maps
 
-This code is built on the original implementation of Scalable Diffusion Models with Transformers (DiT)<br><sub>Official PyTorch Implementation</sub>
+This code and repository is built on the original implementation of Scalable Diffusion Models with Transformers (DiT)<br><sub>Official PyTorch Implementation</sub>
 
 This repo contains PyTorch model definitions, description, and training/sampling code for our implementation of generating temperature maps 
 diffusion models with transformers (DiTs).

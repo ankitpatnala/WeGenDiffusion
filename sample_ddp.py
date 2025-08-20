@@ -167,7 +167,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt", type=str, required=True)
-    parser.add_argument("--model", type=str, default="DiT-XL/2", choices=list(DiT_models.keys()))
+    parser.add_argument("--model", type=str, default="DiT-B/2", choices=list(DiT_models.keys()))
     parser.add_argument("--image-size", type=int, nargs=2, default=(90, 180))
     parser.add_argument("--num-classes", type=int, default=1000)
     parser.add_argument("--batch-size", type=int, default=4)

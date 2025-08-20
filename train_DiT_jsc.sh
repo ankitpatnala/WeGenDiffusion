@@ -25,5 +25,7 @@ export MASTER_PORT=12340
 master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_ADDR=${master_addr}
 
-#torchrun train.py --global-batch-size 4
-srun --overlap python train.py --global-batch-size 4 --epochs=50
+echo "Start time: $(date +%T)"
+srun --overlap python train.py --global-batch-size 4 --epochs=250
+echo "End time: $(date +%T)"
+

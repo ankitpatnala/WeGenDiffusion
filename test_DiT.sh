@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=dit_t2m_test
 #SBATCH --time=1-00:00:00
-#SBATCH --account=hclimrep
+#SBATCH --account=training2533
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
-#SBATCH --partition=booster
+#SBATCH --partition=dc-gpu
 #SBATCH --output=./logs/%x.%j.out
 #SBATCH --error=./logs/%x.%j.err
 
@@ -29,4 +29,4 @@ export MASTER_ADDR=${master_addr}
 
 #run the python file
 #torchrun --master-addr=$MASTER_ADDR --master-port=$MASTER_PORT sample_ddp.py --ckpt /fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/results/DiT-XL-2/ckpt_0032000.pt
-srun --overlap python sample_ddp.py --ckpt results/DiT-XL-2/ckpt_0099500.pt --output-dir ./samples
+srun --overlap python sample_ddp.py --ckpt results/DiT-B-2/ckpt_0000240.pt --output-dir ./samples

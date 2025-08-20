@@ -40,13 +40,15 @@ class NetCDFDataset(Dataset):
     def __init__(self, data_filepath, labels=None, variables=["t2m"]):#, mean, std):
         #self.data = (data - mean) / std
         self.data = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
+        self.mean = self.data.mean()
+        self.std = self.data.std()
         self.vars = variables
         if labels is None:
             self.target = np.zeros(len(self.data['valid_time']))
         else:
             pass
     def __getitem__(self, index):
-        x = np.concat([np.expand_dims(self.data.isel(valid_time=index)[var].values,axis=0) 
+        x = np.concat([np.expand_dims((self.data.isel(valid_time=index)[var].values - self.mean[var].values)/self.std[var].values,axis=0) 
                         for var in self.vars])
         y = torch.tensor(self.target[index], dtype=torch.long)
         return x, y
@@ -157,8 +159,6 @@ def main(args):
             running_loss += loss.item()
             steps += 1
 
-            print("step_number: ", i)
-
             if steps % args.log_every == 0:
                 torch.cuda.synchronize()
                 avg_loss = torch.tensor(running_loss / args.log_every, device=device)
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--data-path", type=str, required=False, default="")
     parser.add_argument("--results-dir", type=str, default="results")
-    parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-S/2")
+    parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-B/2")
     parser.add_argument("--image-size", type=int, default=(90,180))
     parser.add_argument("--num-classes", type=int, default=1000)
     parser.add_argument("--epochs", type=int, default=2000)
@@ -194,6 +194,6 @@ if __name__ == "__main__":
     parser.add_argument("--vae", type=str, choices=["ema", "mse"], default="ema")  # Choice doesn't affect training
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--log-every", type=int, default=10)
-    parser.add_argument("--ckpt-every", type=int, default=1)
+    parser.add_argument("--ckpt-every", type=int, default=10)
     args = parser.parse_args()
     main(args)

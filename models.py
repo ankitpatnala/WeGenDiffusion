@@ -99,9 +99,9 @@ class LabelEmbedder_PreviousState(nn.Module):
     """
     def __init__(self, input_size=(90, 180), patch_size=2, in_channels=1, hidden_size=1152):
         super().__init__()
-        self.embeder = PatchEmbed(input_size, patch_size, in_channels, hidden_size, bias=True)
-    def forward(self, x):
-        x = self.embeder(x)
+        self.embedder = PatchEmbed(input_size, patch_size, in_channels, hidden_size, bias=True)
+    def forward(self, x, train, force_drop_ids=None):
+        x = self.embedder(x)
         # x = x.reshape(x.shape[0], -1)
         x = x.mean(dim=1)
         return x
@@ -171,6 +171,7 @@ class DiT(nn.Module):
         class_dropout_prob=0.1,
         num_classes=1000,
         learn_sigma=True,
+        labels=None
     ):
         super().__init__()
         self.learn_sigma  = learn_sigma
@@ -181,7 +182,11 @@ class DiT(nn.Module):
 
         self.x_embedder = PatchEmbed(input_size, patch_size, in_channels, hidden_size, bias=True)
         self.t_embedder = TimestepEmbedder(hidden_size)
-        self.y_embedder = LabelEmbedder(num_classes, hidden_size, class_dropout_prob)
+        self.labels = labels
+        if self.labels == "previous_state":
+            self.y_embedder = LabelEmbedder_PreviousState(input_size, patch_size, in_channels, hidden_size)
+        else:
+            self.y_embedder = LabelEmbedder(num_classes, hidden_size, class_dropout_prob)
         num_patches = self.x_embedder.num_patches
         # Will use fixed sin-cos embedding:
         self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, hidden_size), requires_grad=False)
@@ -214,7 +219,10 @@ class DiT(nn.Module):
         nn.init.constant_(self.x_embedder.proj.bias, 0)
 
         # Initialize label embedding table:
-        nn.init.normal_(self.y_embedder.embedding_table.weight, std=0.02)
+        if not self.labels == "previous_state":
+            nn.init.normal_(self.y_embedder.embedding_table.weight, std=0.02)
+        else:
+            nn.init.constant_(self.y_embedder.embedder.proj.bias, 0)
 
         # Initialize timestep embedding MLP:
         nn.init.normal_(self.t_embedder.mlp[0].weight, std=0.02)

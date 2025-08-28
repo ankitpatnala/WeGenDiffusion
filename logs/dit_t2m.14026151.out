@@ -1,0 +1,6 @@
+Start time: 16:46:06
+Namespace(seed=42, data_path='', results_dir='results', model='DiT-B/2', image_size=(90, 180), num_classes=1000, epochs=250, global_batch_size=4, global_seed=0, vae='ema', num_workers=4, log_every=10, ckpt_every=10, labels='previous_state')
+Namespace(seed=42, data_path='', results_dir='results', model='DiT-B/2', image_size=(90, 180), num_classes=1000, epochs=250, global_batch_size=4, global_seed=0, vae='ema', num_workers=4, log_every=10, ckpt_every=10, labels='previous_state')
+Namespace(seed=42, data_path='', results_dir='results', model='DiT-B/2', image_size=(90, 180), num_classes=1000, epochs=250, global_batch_size=4, global_seed=0, vae='ema', num_workers=4, log_every=10, ckpt_every=10, labels='previous_state')
+Namespace(seed=42, data_path='', results_dir='results', model='DiT-B/2', image_size=(90, 180), num_classes=1000, epochs=250, global_batch_size=4, global_seed=0, vae='ema', num_workers=4, log_every=10, ckpt_every=10, labels='previous_state')
+End time: 16:46:28

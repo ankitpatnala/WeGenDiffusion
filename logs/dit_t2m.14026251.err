@@ -1,0 +1,35 @@
+Lmod has detected the following error: The following module(s) are unknown:
+"GCCcore/13.3.0"
+
+Please check the spelling or version number. Also try "module spider ..."
+It is also possible your cache file is out-of-date; it may help to try:
+  $ module --ignore_cache load "GCCcore/13.3.0"
+
+Also make sure that all modulefiles written in TCL start with the string
+#%Module
+
+
+
+[W828 17:17:00.764446234 socket.cpp:755] [c10d] The client socket cannot be initialized to connect to [jrc0351.jureca]:12340 (errno: 97 - Address family not supported by protocol).
+[W828 17:17:00.765101040 socket.cpp:755] [c10d] The client socket cannot be initialized to connect to [jrc0351.jureca]:12340 (errno: 97 - Address family not supported by protocol).
+[W828 17:17:00.765101640 socket.cpp:755] [c10d] The client socket cannot be initialized to connect to [jrc0351.jureca]:12340 (errno: 97 - Address family not supported by protocol).
+[W828 17:17:00.845515438 socket.cpp:755] [c10d] The client socket cannot be initialized to connect to [jrc0351.jureca]:12340 (errno: 97 - Address family not supported by protocol).
+[2025-08-28 17:17:05] Starting training...
+/p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py:4631: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py:4631: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py:4631: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py:4631: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+[2025-08-28 17:17:11] Epoch 0 Step 10: Loss = 0.9605, Steps/sec = 1.55
+[2025-08-28 17:17:13] Epoch 0 Step 20: Loss = 0.6417, Steps/sec = 5.90
+[2025-08-28 17:17:15] Epoch 0 Step 30: Loss = 0.3527, Steps/sec = 5.89
+[2025-08-28 17:17:16] Epoch 0 Step 40: Loss = 0.2516, Steps/sec = 5.89
+[2025-08-28 17:17:18] Epoch 0 Step 50: Loss = 0.2274, Steps/sec = 5.89
+[2025-08-28 17:17:20] Epoch 0 Step 60: Loss = 0.1770, Steps/sec = 5.89
+[2025-08-28 17:17:21] Epoch 0 Step 70: Loss = 0.1438, Steps/sec = 5.88
+[2025-08-28 17:17:23] Epoch 0 Step 80: Loss = 0.1451, Steps/sec = 5.89
+[2025-08-28 17:17:25] Epoch 0 Step 90: Loss = 0.1078, Steps/sec = 5.89
+[2025-08-28 17:17:27] Epoch 0 Step 100: Loss = 0.0695, Steps/sec = 5.89

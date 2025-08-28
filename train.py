@@ -49,7 +49,6 @@ def extract_season(data):
          np.isin(months, [6, 7, 8]),
          np.isin(months, [9, 10, 11])],
         [0, 1, 2, 3],
-        default=-1
     )
 
 class NetCDFDataset(Dataset):
@@ -59,26 +58,31 @@ class NetCDFDataset(Dataset):
         self.mean = self.data.mean()
         self.std = self.data.std()
         self.vars = variables
-        if labels is None:
+        self.labels = labels
+        if self.labels is None:
             self.target = np.zeros(len(self.data['valid_time']))
-        elif labels == "month":
+        elif self.labels == "month":
             self.target = extract_month(self.data)
-        elif labels == "season":
+        elif self.labels == "season":
             self.target = extract_season(self.data)
+            print(self.target)
         else:
             pass
     def __getitem__(self, index):
-        x = np.concat([np.expand_dims((self.data.isel(valid_time=index+1)[var].values - self.mean[var].values)/self.std[var].values,axis=0) 
+        x = np.concat([np.expand_dims((self.data.isel(valid_time=index)[var].values - self.mean[var].values)/self.std[var].values,axis=0) 
                         for var in self.vars])
-        if self.target == "previous_state":
+        if self.labels == "previous_state":
+            x = np.concat([np.expand_dims((self.data.isel(valid_time=index+1)[var].values - self.mean[var].values)/self.std[var].values,axis=0) 
+                        for var in self.vars])
             y =  np.concat([np.expand_dims((self.data.isel(valid_time=index)[var].values - self.mean[var].values)/self.std[var].values,axis=0) 
                         for var in self.vars])
         else:
             y = torch.tensor(self.target[index], dtype=torch.long)
+            print(y)
 
         return x, y
     def __len__(self):
-        if self.target == "previous_state":
+        if self.labels == "previous_state":
             return len(self.data['valid_time'])-1
         else:
             return len(self.data['valid_time'])
@@ -127,15 +131,17 @@ def main(args):
     torch.manual_seed(args.seed * dist.get_world_size() + rank)
 
     if rank == 0:
-        experiment_path = os.path.join(args.results_dir, f"{args.model.replace('/', '-')}")
+        experiment_path = os.path.join(args.results_dir, f"{args.model.replace('/', '-')}_{args.labels}")
         os.makedirs(experiment_path, exist_ok=True)
     else:
         experiment_path = None
 
     logger = create_logger(experiment_path if rank == 0 else None)
 
-    model = DiT_models[args.model](input_size=args.image_size, num_classes=args.num_classes)
+    model = DiT_models[args.model](input_size=args.image_size, num_classes=args.num_classes, labels=args.labels)
     model = DDP(model.to(device), device_ids=[rank])
+    # # load model weights #perso
+    # model.load_state_dict(torch.load("./results/DiT-B/2/ckpt_0000000.pt")["model"])
     ema = deepcopy(model.module).to(device)
     requires_grad(ema, False)
 
@@ -145,7 +151,7 @@ def main(args):
     #ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
     train_filepath = "./data/2011_t2m_era5_2deg.nc"
     #ds_train = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
-    train_dataset = NetCDFDataset(train_filepath, labels="month")
+    train_dataset = NetCDFDataset(train_filepath, labels=args.labels)
 
     train_sampler = DistributedSampler(
         train_dataset, 
@@ -223,5 +229,7 @@ if __name__ == "__main__":
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--log-every", type=int, default=10)
     parser.add_argument("--ckpt-every", type=int, default=10)
+    parser.add_argument("--labels", type=str, choices=["month", "season", "previous_state"], default=None)
     args = parser.parse_args()
+    print(args)
     main(args)

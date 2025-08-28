@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=dit_t2m
-#SBATCH --time=1-00:00:00
+#SBATCH --time=01:00:00
 #SBATCH --account=training2533
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
@@ -27,6 +27,6 @@ master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_ADDR=${master_addr}
 
 echo "Start time: $(date +%T)"
-srun --overlap python train.py --global-batch-size 4 --epochs=250
+srun --overlap python train.py --global-batch-size 4 --epochs=250 --labels=$1
 echo "End time: $(date +%T)"
 

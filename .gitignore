@@ -1,6 +1,8 @@
 *.png
 *.npy
 
+__pycache__/*
+.ipynb_checkpoints/*
 samples/*.png
 results/*
 uv.lock

@@ -1,0 +1,125 @@
+Lmod has detected the following error: The following module(s) are unknown:
+"GCCcore/13.3.0"
+
+Please check the spelling or version number. Also try "module spider ..."
+It is also possible your cache file is out-of-date; it may help to try:
+  $ module --ignore_cache load "GCCcore/13.3.0"
+
+Also make sure that all modulefiles written in TCL start with the string
+#%Module
+
+
+
+[W828 16:46:23.096228182 socket.cpp:755] [c10d] The client socket cannot be initialized to connect to [jrc0425.jureca]:12340 (errno: 97 - Address family not supported by protocol).
+[W828 16:46:23.096240432 socket.cpp:755] [c10d] The client socket cannot be initialized to connect to [jrc0425.jureca]:12340 (errno: 97 - Address family not supported by protocol).
+[W828 16:46:23.096245342 socket.cpp:755] [c10d] The client socket cannot be initialized to connect to [jrc0425.jureca]:12340 (errno: 97 - Address family not supported by protocol).
+[W828 16:46:23.098971926 socket.cpp:755] [c10d] The client socket cannot be initialized to connect to [jrc0425.jureca]:12340 (errno: 97 - Address family not supported by protocol).
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/train.py", line 235, in <module>
+[rank0]:     main(args)
+[rank0]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/train.py", line 141, in main
+[rank0]:     model = DiT_models[args.model](input_size=args.image_size, num_classes=args.num_classes, labels=args.labels)
+[rank0]:             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 371, in DiT_B_2
+[rank0]:     return DiT(depth=12, hidden_size=768, patch_size=2, num_heads=12, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 198, in __init__
+[rank0]:     self.initialize_weights()
+[rank0]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 222, in initialize_weights
+[rank0]:     nn.init.normal_(self.y_embedder.embedding_table.weight, std=0.02)
+[rank0]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1940, in __getattr__
+[rank0]:     raise AttributeError(
+[rank0]: AttributeError: 'LabelEmbedder_PreviousState' object has no attribute 'embedding_table'
+[rank0]:[W828 16:46:26.883640657 ProcessGroupNCCL.cpp:1479] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/train.py", line 235, in <module>
+[rank1]:     main(args)
+[rank1]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/train.py", line 141, in main
+[rank1]:     model = DiT_models[args.model](input_size=args.image_size, num_classes=args.num_classes, labels=args.labels)
+[rank1]:             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 371, in DiT_B_2
+[rank1]:     return DiT(depth=12, hidden_size=768, patch_size=2, num_heads=12, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 198, in __init__
+[rank1]:     self.initialize_weights()
+[rank1]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 222, in initialize_weights
+[rank1]:     nn.init.normal_(self.y_embedder.embedding_table.weight, std=0.02)
+[rank1]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1940, in __getattr__
+[rank1]:     raise AttributeError(
+[rank1]: AttributeError: 'LabelEmbedder_PreviousState' object has no attribute 'embedding_table'
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/train.py", line 235, in <module>
+[rank2]:     main(args)
+[rank2]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/train.py", line 141, in main
+[rank2]:     model = DiT_models[args.model](input_size=args.image_size, num_classes=args.num_classes, labels=args.labels)
+[rank2]:             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 371, in DiT_B_2
+[rank2]:     return DiT(depth=12, hidden_size=768, patch_size=2, num_heads=12, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 198, in __init__
+[rank2]:     self.initialize_weights()
+[rank2]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 222, in initialize_weights
+[rank2]:     nn.init.normal_(self.y_embedder.embedding_table.weight, std=0.02)
+[rank2]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1940, in __getattr__
+[rank2]:     raise AttributeError(
+[rank2]: AttributeError: 'LabelEmbedder_PreviousState' object has no attribute 'embedding_table'
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/train.py", line 235, in <module>
+[rank3]:     main(args)
+[rank3]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/train.py", line 141, in main
+[rank3]:     model = DiT_models[args.model](input_size=args.image_size, num_classes=args.num_classes, labels=args.labels)
+[rank3]:             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 371, in DiT_B_2
+[rank3]:     return DiT(depth=12, hidden_size=768, patch_size=2, num_heads=12, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 198, in __init__
+[rank3]:     self.initialize_weights()
+[rank3]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/models.py", line 222, in initialize_weights
+[rank3]:     nn.init.normal_(self.y_embedder.embedding_table.weight, std=0.02)
+[rank3]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1940, in __getattr__
+[rank3]:     raise AttributeError(
+[rank3]: AttributeError: 'LabelEmbedder_PreviousState' object has no attribute 'embedding_table'
+[rank1]:[W828 16:46:26.181527665 TCPStore.cpp:125] [c10d] recvValue failed on SocketImpl(fd=3, addr=jrc0425.jureca:57042, remote=jrc0425.jureca:12340): failed to recv, got 0 bytes
+Exception raised from recvBytes at /pytorch/torch/csrc/distributed/c10d/Utils.hpp:678 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x1494b40315e8 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x5ba8bfe (0x1494f3c4ebfe in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #2: <unknown function> + 0x5baaf40 (0x1494f3c50f40 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #3: <unknown function> + 0x5bab84a (0x1494f3c5184a in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #4: c10d::TCPStore::check(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) + 0x2a9 (0x1494f3c4b2a9 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #5: c10d::ProcessGroupNCCL::heartbeatMonitor() + 0x379 (0x1494b534a9f9 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0xe8bb3 (0x1494a52d0bb3 in /p/software/jurecadc/stages/2025/software/GCCcore/13.3.0/lib64/libstdc++.so.6)
+frame #7: <unknown function> + 0x897fa (0x14950afbe7fa in /usr/lib64/libc.so.6)
+frame #8: <unknown function> + 0x10e820 (0x14950b043820 in /usr/lib64/libc.so.6)
+
+[rank1]:[W828 16:46:26.185062526 ProcessGroupNCCL.cpp:1662] [PG ID 0 PG GUID 0 Rank 1] Failed to check the "should dump" flag on TCPStore, (maybe TCPStore server has shut down too early), with error: failed to recv, got 0 bytes
+[rank3]:[W828 16:46:26.181546105 TCPStore.cpp:125] [c10d] recvValue failed on SocketImpl(fd=3, addr=jrc0425.jureca:57048, remote=jrc0425.jureca:12340): failed to recv, got 0 bytes
+Exception raised from recvBytes at /pytorch/torch/csrc/distributed/c10d/Utils.hpp:678 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x1481df1b75e8 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x5ba8bfe (0x14821edd4bfe in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #2: <unknown function> + 0x5baaf40 (0x14821edd6f40 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #3: <unknown function> + 0x5bab84a (0x14821edd784a in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch[rank2]:[W828 16:46:26.181540395 TCPStore.cpp:125] [c10d] recvValue failed on SocketImpl(fd=3, addr=jrc0425.jureca:57060, remote=jrc0425.jureca:12340): failed to recv, got 0 bytes
+Exception raised from recvBytes at /pytorch/torch/csrc/distributed/c10d/Utils.hpp:678 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x14bc7bbef5e8 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x5ba8bfe (0x14bcbb80cbfe in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #2: <unknown function> + 0x5baaf40 (0x14bcbb80ef40 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #3: <unknown function> + 0x5bab84a (0x14bcbb80f84a in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #4: c10d::TCPStore::check(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) + 0x2a9 (0x14821edd12a9 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #5: c10d::ProcessGroupNCCL::heartbeatMonitor() + 0x379 (0x1481e04d09f9 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0xe8bb3 (0x1481d0456bb3 in /p/software/jurecadc/stages/2025/software/GCCcore/13.3.0/lib64/libstdc++.so.6)
+frame #7: <unknown function> + 0x897fa (0x1482361447fa in /usr/lib64/libc.so.6)
+frame #8: <unknown function> + 0x10e820 (0x1482361c9820 in /usr/lib64/libc.so.6)
+
+/lib/libtorch_cpu.so)
+frame #4: c10d::TCPStore::check(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) + 0x2a9 (0x14bcbb8092a9 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #5: c10d::ProcessGroupNCCL::heartbeatMonitor() + 0x379 (0x14bc7cf089f9 in /p/project1/training2533/lancelin1/WeGenDiffusion/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0xe8bb3 (0x14bc6ce8ebb3 in /p/software/jurecadc/stages/2025/software/GCCcore/13.3.0/lib64/libstdc++.so.6)
+frame #7: <unknown function> + 0x897fa (0x14bcd2b7c7fa in /usr/lib64/libc.so.6)
+frame #8: <unknown function> + 0x10e820 (0x14bcd2c01820 in /usr/lib64/libc.so.6)
+
+[rank3]:[W828 16:46:26.185234707 ProcessGroupNCCL.cpp:1662] [PG ID 0 PG GUID 0 Rank 3] Failed to check the "should dump" flag on TCPStore, (maybe TCPStore server has shut down too early), with error: failed to recv, got 0 bytes
+[rank2]:[W828 16:46:26.185264158 ProcessGroupNCCL.cpp:1662] [PG ID 0 PG GUID 0 Rank 2] Failed to check the "should dump" flag on TCPStore, (maybe TCPStore server has shut down too early), with error: failed to recv, got 0 bytes
+srun: error: jrc0425: tasks 0-3: Exited with exit code 1

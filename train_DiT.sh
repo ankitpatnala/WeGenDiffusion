@@ -1,11 +1,13 @@
 #!/bin/bash -x
 #SBATCH --job-name=fancy
+#SBATCH --account=training2533
 #SBATCH --time=1-00:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:8
 #SBATCH --partition=standard
+#SBATCH --reservation=mlesm_hackathon_2
 
 ml GCCcore/13.3.0 Python/3.12.3-GCCcore-13.3.0
 

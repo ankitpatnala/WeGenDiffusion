@@ -93,6 +93,19 @@ class LabelEmbedder(nn.Module):
         embeddings = self.embedding_table(labels)
         return embeddings
 
+class LabelEmbedder_PreviousState(nn.Module):
+    """
+    Embeds class labels into vector representations. Also handles label dropout for classifier-free guidance.
+    """
+    def __init__(self, input_size=(90, 180), patch_size=2, in_channels=1, hidden_size=1152):
+        super().__init__()
+        self.embeder = PatchEmbed(input_size, patch_size, in_channels, hidden_size, bias=True)
+    def forward(self, x):
+        x = self.embeder(x)
+        # x = x.reshape(x.shape[0], -1)
+        x = x.mean(dim=1)
+        return x
+    
 
 #################################################################################
 #                                 Core DiT Model                                #

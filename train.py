@@ -36,6 +36,22 @@ import numpy as np
 from init_ddp import init_distributed_mode
 import json
 
+
+def extract_month(data):
+    return data.valid_time.dt.month.values
+
+def extract_season(data):
+    months = data.valid_time.dt.month.values
+    # 0: DJF, 1: MAM, 2: JJA, 3: SON
+    return np.select(
+        [np.isin(months, [12, 1, 2]),
+         np.isin(months, [3, 4, 5]),
+         np.isin(months, [6, 7, 8]),
+         np.isin(months, [9, 10, 11])],
+        [0, 1, 2, 3],
+        default=-1
+    )
+
 class NetCDFDataset(Dataset):
     def __init__(self, data_filepath, labels=None, variables=["t2m"]):#, mean, std):
         #self.data = (data - mean) / std
@@ -45,15 +61,27 @@ class NetCDFDataset(Dataset):
         self.vars = variables
         if labels is None:
             self.target = np.zeros(len(self.data['valid_time']))
+        elif labels == "month":
+            self.target = extract_month(self.data)
+        elif labels == "season":
+            self.target = extract_season(self.data)
         else:
             pass
     def __getitem__(self, index):
-        x = np.concat([np.expand_dims((self.data.isel(valid_time=index)[var].values - self.mean[var].values)/self.std[var].values,axis=0) 
+        x = np.concat([np.expand_dims((self.data.isel(valid_time=index+1)[var].values - self.mean[var].values)/self.std[var].values,axis=0) 
                         for var in self.vars])
-        y = torch.tensor(self.target[index], dtype=torch.long)
+        if self.target == "previous_state":
+            y =  np.concat([np.expand_dims((self.data.isel(valid_time=index)[var].values - self.mean[var].values)/self.std[var].values,axis=0) 
+                        for var in self.vars])
+        else:
+            y = torch.tensor(self.target[index], dtype=torch.long)
+
         return x, y
     def __len__(self):
-        return len(self.data['valid_time'])
+        if self.target == "previous_state":
+            return len(self.data['valid_time'])-1
+        else:
+            return len(self.data['valid_time'])
 
 def update_ema(ema_model, model, decay=0.9999):
     with torch.no_grad():
@@ -117,7 +145,7 @@ def main(args):
     #ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
     train_filepath = "./data/2011_t2m_era5_2deg.nc"
     #ds_train = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
-    train_dataset = NetCDFDataset(train_filepath)
+    train_dataset = NetCDFDataset(train_filepath, labels="month")
 
     train_sampler = DistributedSampler(
         train_dataset, 

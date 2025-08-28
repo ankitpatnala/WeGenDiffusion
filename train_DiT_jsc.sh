@@ -9,6 +9,7 @@
 #SBATCH --partition=dc-gpu
 #SBATCH --output=./logs/%x.%j.out
 #SBATCH --error=./logs/%x.%j.err
+#SBATCH --reservation=mlesm_hackathon_2
 
 ml GCCcore/13.3.0 Python/3.12.3-GCCcore-13.3.0
 

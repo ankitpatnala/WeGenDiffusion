@@ -2,4 +2,5 @@
 *.npy
 
 samples/*.png
+results/*
 uv.lock

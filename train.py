@@ -35,6 +35,7 @@ import xarray as xr
 import numpy as np
 from init_ddp import init_distributed_mode
 import json
+from download import find_model
 
 
 def extract_month(data):
@@ -131,7 +132,14 @@ def main(args):
     torch.manual_seed(args.seed * dist.get_world_size() + rank)
 
     if rank == 0:
-        experiment_path = os.path.join(args.results_dir, f"{args.model.replace('/', '-')}_{args.labels}")
+        path_res = os.path.join(args.results_dir, f"{args.model.replace('/', '-')}_{args.labels}")
+        # if already exists, add a number to the path
+        if os.path.exists(path_res):
+            i = 1
+            while os.path.exists(path_res + f"_{i}"):
+                i += 1
+            path_res = path_res + f"_{i}"
+        experiment_path = path_res
         os.makedirs(experiment_path, exist_ok=True)
     else:
         experiment_path = None
@@ -141,11 +149,13 @@ def main(args):
     model = DiT_models[args.model](input_size=args.image_size, num_classes=args.num_classes, labels=args.labels)
     model = DDP(model.to(device), device_ids=[rank])
     # # load model weights #perso
-    # model.load_state_dict(torch.load("./results/DiT-B/2/ckpt_0000000.pt")["model"])
+    if args.load_from_checkpoint is not None:
+        state_dict = find_model(args.load_from_checkpoint)
+        model.module.load_state_dict(state_dict)
     ema = deepcopy(model.module).to(device)
     requires_grad(ema, False)
 
-    diffusion = create_diffusion(timestep_respacing="")
+    diffusion = create_diffusion(timestep_respacing="", diffusion_steps=args.diffusion_steps)
     opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
 
     #ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
@@ -223,6 +233,7 @@ if __name__ == "__main__":
     parser.add_argument("--image-size", type=int, default=(90,180))
     parser.add_argument("--num-classes", type=int, default=1000)
     parser.add_argument("--epochs", type=int, default=2000)
+    parser.add_argument("--diffusion-steps", type=int, default=1000, help="Number of denoising steps")
     parser.add_argument("--global-batch-size", type=int, default=256)
     parser.add_argument("--global-seed", type=int, default=0)
     parser.add_argument("--vae", type=str, choices=["ema", "mse"], default="ema")  # Choice doesn't affect training
@@ -230,6 +241,8 @@ if __name__ == "__main__":
     parser.add_argument("--log-every", type=int, default=10)
     parser.add_argument("--ckpt-every", type=int, default=10)
     parser.add_argument("--labels", type=str, choices=["month", "season", "previous_state"], default=None)
+    # add a parameter to load from checkpoint
+    parser.add_argument("--load-from-checkpoint", type=str, default=None)
     args = parser.parse_args()
     print(args)
     main(args)

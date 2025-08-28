@@ -2,14 +2,17 @@
 #SBATCH --job-name=dit_sample
 #SBATCH --time=00:30:00
 #SBATCH --account=training2533
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
-#SBATCH --partition=dc-gpu
+#SBATCH --partition=dc-gpu-devel
 #SBATCH --output=./logs/%x.%j.out
 #SBATCH --error=./logs/%x.%j.err
-#SBATCH --reservation=dc-gpu-devel
+
+
+
+### SBATCH --reservation=mlesm_hackathon_2
 
 #import modules and activate the virtual
 ml GCCcore/13.3.0 Python/3.12.3-GCCcore-13.3.0

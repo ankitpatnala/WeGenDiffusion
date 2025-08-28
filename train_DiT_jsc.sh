@@ -6,12 +6,13 @@
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
-#SBATCH --partition=dc-gpu
+#SBATCH --partition=dc-gpu-devel
 #SBATCH --output=./logs/%x.%j.out
 #SBATCH --error=./logs/%x.%j.err
-#SBATCH --reservation=dc-gpu-devel
 
+##  SBATCH --reservation=dc-gpu-devel
 #mlesm_hackathon_2
+
 ml GCCcore/13.3.0 Python/3.12.3-GCCcore-13.3.0
 
 # environmental variables to support cpus_per_task with Slurm>22.05
@@ -28,6 +29,6 @@ master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_ADDR=${master_addr}
 
 echo "Start time: $(date +%T)"
-srun --overlap python train.py --global-batch-size 4 --epochs=250 --labels=$1
+srun --overlap python train.py --global-batch-size 4 --epochs=250 --labels=$1 --load-from-checkpoint ./results/DiT-B-2_previous_state/ckpt_0000050.pt --diffusion-steps=500
 echo "End time: $(date +%T)"
 

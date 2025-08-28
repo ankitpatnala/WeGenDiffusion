@@ -109,6 +109,12 @@ def main(args):
     device = rank % torch.cuda.device_count()
     torch.cuda.set_device(device)
     torch.manual_seed(42 + rank)
+     
+    data_path = "/p/project1/training2533/patnala1/WeGenDiffusion/data/2011_t2m_era5_2deg.nc"
+    ds = xr.open_dataset(data_path)
+    mean = ds.mean()['t2m'].values
+    std = ds.std()['t2m'].values
+
 
     model = DiT_models[args.model](
         input_size=args.image_size,
@@ -142,10 +148,7 @@ def main(args):
             model_kwargs=model_kwargs,
         )
 
-        #with open("t2m_norm_stats.json") as f:
-            #stats = json.load(f)
-
-        #sample = sample * stats["std"] + stats["mean"]
+        sample = sample * mean + std 
         out_path = os.path.join(args.output_dir, f"sample_rank{rank}_batch{i}.npy")
         save_sample(
             sample,

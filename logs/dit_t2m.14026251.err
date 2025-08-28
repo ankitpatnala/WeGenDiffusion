@@ -33,3 +33,13 @@ Also make sure that all modulefiles written in TCL start with the string
 [2025-08-28 17:17:23] Epoch 0 Step 80: Loss = 0.1451, Steps/sec = 5.89
 [2025-08-28 17:17:25] Epoch 0 Step 90: Loss = 0.1078, Steps/sec = 5.89
 [2025-08-28 17:17:27] Epoch 0 Step 100: Loss = 0.0695, Steps/sec = 5.89
+[2025-08-28 17:17:28] Epoch 0 Step 110: Loss = 0.0603, Steps/sec = 5.88
+[2025-08-28 17:17:30] Epoch 0 Step 120: Loss = 0.0853, Steps/sec = 5.88
+[2025-08-28 17:17:32] Epoch 0 Step 130: Loss = 0.0968, Steps/sec = 5.88
+[2025-08-28 17:17:33] Epoch 0 Step 140: Loss = 0.0442, Steps/sec = 5.87
+[2025-08-28 17:17:35] Epoch 0 Step 150: Loss = 0.0608, Steps/sec = 5.87
+[2025-08-28 17:17:37] Epoch 0 Step 160: Loss = 0.0756, Steps/sec = 5.87
+[2025-08-28 17:17:38] Epoch 0 Step 170: Loss = 0.0720, Steps/sec = 5.86
+[2025-08-28 17:17:40] Epoch 0 Step 180: Loss = 0.0547, Steps/sec = 5.86
+[2025-08-28 17:17:42] Epoch 0 Step 190: Loss = 0.0605, Steps/sec = 5.86
+[2025-08-28 17:17:44] Epoch 0 Step 200: Loss = 0.1338, Steps/sec = 5.86

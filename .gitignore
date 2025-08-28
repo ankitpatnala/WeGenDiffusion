@@ -1,6 +1,7 @@
 *.png
 *.npy
 
+logs/*
 __pycache__/*
 .ipynb_checkpoints/*
 samples/*.png

@@ -522,3 +522,12 @@ Also make sure that all modulefiles written in TCL start with the string
 [2025-08-28 17:17:23] Epoch 13 Step 4950: Loss = 0.0203, Steps/sec = 5.65
 [2025-08-28 17:17:25] Epoch 13 Step 4960: Loss = 0.0246, Steps/sec = 5.68
 [2025-08-28 17:17:27] Epoch 13 Step 4970: Loss = 0.0227, Steps/sec = 5.73
+[2025-08-28 17:17:28] Epoch 13 Step 4980: Loss = 0.0781, Steps/sec = 5.64
+[2025-08-28 17:17:30] Epoch 13 Step 4990: Loss = 0.0423, Steps/sec = 5.69
+[2025-08-28 17:17:32] Epoch 13 Step 5000: Loss = 0.0409, Steps/sec = 5.72
+[2025-08-28 17:17:34] Epoch 13 Step 5010: Loss = 0.0131, Steps/sec = 5.71
+[2025-08-28 17:17:35] Epoch 13 Step 5020: Loss = 0.0128, Steps/sec = 5.72
+[2025-08-28 17:17:37] Epoch 13 Step 5030: Loss = 0.0103, Steps/sec = 5.72
+[2025-08-28 17:17:39] Epoch 13 Step 5040: Loss = 0.0967, Steps/sec = 5.66
+[2025-08-28 17:17:41] Epoch 13 Step 5050: Loss = 0.0268, Steps/sec = 5.72
+[2025-08-28 17:17:43] Epoch 13 Step 5060: Loss = 0.0486, Steps/sec = 5.70

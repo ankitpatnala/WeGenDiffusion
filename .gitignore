@@ -1,5 +1,7 @@
 *.png
 *.npy
+*.err
+*.out
 
 logs/*
 __pycache__/*

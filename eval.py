@@ -92,41 +92,40 @@ def split_region(input):
     """
     split the dataset along latitude, North/South
     """
-    output1=input[:,0:45,:]
-    output2=input[:,45:90,:]
-    return output1, output2
+    europe=input[:,20:30,75:145]
+    tropics=input[:,33:66,:]
+    return europe, tropics
 
 def main(args):
     train_dataset = NetCDFDataset(args.train_filepath)
     train_array = np.array(train_dataset.data['t2m'].values)[:args.num_samples]
     gen_array = load_gen_arrays(args.gen_filepath, n_files=args.num_samples) 
 
-    print(f'Successfully loaded dataset of size {gen_array.shape} and generated dataset of size {gen_array.shape}')
+    print(f'Successfully loaded dataset of size {gen_array.shape} and generated dataset of size {gen_array.shape}.')
+    train_array_europe, train_array_tropics = split_region(train_array)
+    gen_array_europe, gen_array_tropics = split_region(gen_array)
+    train_arrays = {'europe': train_array_europe, 'tropics': train_array_tropics}
+    gen_arrays = {'europe': gen_array_europe, 'tropics': gen_array_tropics}
+    unconditional_fid_values = []
 
-    train_array_north, train_array_south = split_region(train_array)
-    gen_array_north, gen_array_south = split_region(gen_array)
-    train_arrays = {'north': train_array_north, 'south': train_array_south}
-    gen_arrays = {'north': gen_array_north, 'south': gen_array_south}
-    unconditional_fid_values = {}
-
-    print(f'Successfully split northern and southern hemisphere')
+    print(f'Successfully split northern and southern hemisphere.')
 
     if not args.conditional:
-        for d in ['north','south']:
-            print(f'Calculating FID for {d}ern hemisphere...')
+        for d in ['europe','tropics']:
+            print(f'Calculating FID for {d}...')
             train_array = train_arrays[d][:args.num_samples]
             gen_array = gen_arrays[d][:args.num_samples]
             fid_value = calculate_fid(train_array, gen_array)
             unconditional_fid_values.append(fid_value)
-            print(f"FID values {fid_value} on {d}ern hemisphere (over {args.num_samples} samples).")
+            print(f"FID values {fid_value} for {d} (over {args.num_samples} samples).")
         print(f"Average FID is {np.mean(unconditional_fid_values)}")
     else:
         labels = train_dataset.target[:args.num_samples]
         unique_labels = np.unique(labels)
         for label in unique_labels:
             conditional_fid_values = []
-            for d in ['north','south']:
-                print(f"Calculating FID for {d}ern hemisphere and label '{label}'...")
+            for d in ['europe','tropics']:
+                print(f"Calculating FID for {d} and label '{label}'...")
                 train_array = train_arrays[d][labels == label][:args.num_samples]
                 gen_array = gen_arrays[d][labels == label][:args.num_samples]
                 num_samples = min(len(train_array), len(gen_array), args.num_samples)
@@ -135,7 +134,7 @@ def main(args):
                     continue
                 fid_value = calculate_fid(train_array, gen_array)
                 conditional_fid_values.append(fid_value)
-                print(f"FID values {fid_value} for class '{label}' on {d}ern hemisphere (over {args.num_samples} samples).")
+                print(f"FID values {fid_value} for class '{label}' for {d} (over {args.num_samples} samples).")
             class_FID = np.mean(conditional_fid_values)
             unconditional_fid_values.append(class_FID)
             print(f"Average FID for class '{label}' is {class_FID}")

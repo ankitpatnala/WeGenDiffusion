@@ -1,5 +1,8 @@
 *.png
 *.npy
+*.pt
 
+logs/
 samples/*.png
+*__pycache__*
 uv.lock

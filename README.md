@@ -45,6 +45,9 @@ generates a folder of samples as well as a `.npz` file which can be directly use
 evaluation suite](https://github.com/openai/guided-diffusion/tree/main/evaluations) to compute FID, Inception Score and
 other metrics. For example, to sample 50K images from our pre-trained DiT-XL/2 model over `N` GPUs, run:
 
+## Checkpoint path
+`/p/project1/training2533/patnala1/WeGenDiffusion/results/DiT-B-2`
+
 ## Group Tasks
 
 Team 1: Implement Evaluation Metrics

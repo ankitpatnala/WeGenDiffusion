@@ -107,7 +107,7 @@ def main(args):
     cur_epoch = args.cur_epoch
     if args.checkpoint is not None:
         ckpt = torch.load(args.resume_from_ckpt)
-        model.load(ckpt['model']
+        model.load(ckpt['model'])
     model = DDP(model.to(device), device_ids=[rank])
     ema = deepcopy(model.module).to(device)
     requires_grad(ema, False)

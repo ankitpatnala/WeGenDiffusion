@@ -9,10 +9,10 @@ model_path = "./results-month/DiT-B-2/ckpt_0000100.pt"
 data_path = "/p/project1/training2533/jendersie1/WeGenDiffusion/data/2011_t2m_era5_2deg.nc"
 num_labels = 12
 shape = (num_labels,1,90,180)
-generate = True
+generate = False
 output_name = 'month'
 axis_name = 'month'
-combine_imgs = False
+combine_imgs = True
 
 if generate:
     model_state_dict = torch.load(model_path, map_location='cuda')['model']
@@ -45,18 +45,32 @@ for i in range(shape[0]):
         'lon':ds['lon'],
          'lat':ds['lat']}))
 
-combined = xr.concat(samples,dim=axis_name)
-
-combined["t2m"].plot(
-    col=axis_name,
-    col_wrap=6,
-    cmap="viridis",
-    cbar_kwargs={
-        "orientation": "vertical",   # vertical colorbar at the side
-        "pad": 0.05,                  # distance from the plots
-        "shrink": 0.8                  # shrink length
-    },
-    vmin=220,
-    vmax=320
-)
-plt.savefig(f'{output_name}_samples.png')
+if combine_imgs:
+    combined = xr.concat(samples,dim=axis_name)
+    combined["t2m"].plot(
+        col=axis_name,
+        col_wrap=6,
+        cmap="viridis",
+        cbar_kwargs={
+            "orientation": "vertical",   # vertical colorbar at the side
+            "pad": 0.05,                  # distance from the plots
+            "shrink": 0.8                  # shrink length
+        },
+        vmin=220,
+        vmax=320
+    )
+    plt.savefig(f'{output_name}_samples.png')
+else:
+    for i, sample in enumerate(samples):
+        sample["t2m"].plot(
+            cmap="viridis",
+            cbar_kwargs={
+                "orientation": "vertical",   # vertical colorbar at the side
+                "pad": 0.05,                  # distance from the plots
+                "shrink": 0.8                  # shrink length
+            },
+            vmin=220,
+            vmax=320
+        )
+        plt.savefig(f'{output_name}_sample_{i}.png')
+        plt.clf()

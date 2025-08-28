@@ -1,6 +1,7 @@
 *.png
 *.npy
 *.pt
+*.log
 
 logs/
 samples/*.png

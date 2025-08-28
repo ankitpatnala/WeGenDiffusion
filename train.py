@@ -105,17 +105,17 @@ def main(args):
 
     model = DiT_models[args.model](input_size=args.image_size, num_classes=args.num_classes)
     cur_epoch = args.cur_epoch
-    if args.checkpoint is not None:
+    if args.resume_from_ckpt is not None:
         ckpt = torch.load(args.resume_from_ckpt)
-        model.load(ckpt['model'])
+        model.load_state_dict(ckpt['model'])
     model = DDP(model.to(device), device_ids=[rank])
     ema = deepcopy(model.module).to(device)
     requires_grad(ema, False)
 
     diffusion = create_diffusion(timestep_respacing="")
     opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
-    if args.checkpoint is not None:
-        opt.load(ckpt["opt"])
+    if args.resume_from_ckpt is not None:
+        opt.load_state_dict(ckpt["opt"])
 
 
     #ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--data-path", type=str, required=False, default="")
     parser.add_argument("--results-dir", type=str, default="results")
-    parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-XL/2")
+    parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-B/2")
     parser.add_argument("--image-size", type=int, default=(90,180))
     parser.add_argument("--num-classes", type=int, default=1000)
     parser.add_argument("--epochs", type=int, default=2000)

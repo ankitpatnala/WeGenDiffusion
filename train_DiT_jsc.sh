@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=dit_t2m
-#SBATCH --time=0-00:40:00
+#SBATCH --time=0-00:20:00
 #SBATCH --account=training2533
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4

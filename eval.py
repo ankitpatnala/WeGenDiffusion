@@ -72,8 +72,8 @@ def calculate_fid(real_samples, generated_samples):
         float: The calculated FID score.
     """
     # Flatten the samples to 2D arrays (N, D)
-    # real_samples = real_samples.reshape(real_samples.shape[0], -1)
-    # generated_samples = generated_samples.reshape(generated_samples.shape[0], -1)
+    real_samples = real_samples.reshape(real_samples.shape[0], -1)
+    generated_samples = generated_samples.reshape(generated_samples.shape[0], -1)
 
     # Calculate means and covariances
     mu1 = np.mean(real_samples, axis=0)
@@ -84,3 +84,74 @@ def calculate_fid(real_samples, generated_samples):
     # Calculate FID
     fid_value = calculate_frechet_distance(mu1, sigma1, mu2, sigma2)
     return fid_value
+
+def split_region(input):
+    """
+    split the dataset along latitude, North/South
+    """
+    output1=input[:,0:45,:]
+    output2=input[:,45:90,:]
+    return output1, output2
+
+def main(args):
+    train_dataset = NetCDFDataset(args.train_filepath)
+    train_array = np.array(train_dataset.data['t2m'].values)
+    gen_array = load_gen_array(args.gen_filepath) #TODO To be implemented by Daniele
+
+    #TODO: split the y axis
+    train_array_north, train_array_south = split_region(train_array)
+    gen_array_north, gen_array_south = split_region(gen_array)
+    train_arrays = {'north': train_array_north, 'south': train_array_south}
+    gen_arrays = {'north': gen_array_north, 'south': gen_array_south}
+    unconditional_fid_values = {}
+
+    if not args.conditional:
+        for d in ['north','south']:
+            train_array = train_arrays[d][:args.num_samples]
+            gen_array = gen_arrays[d][:args.num_samples]
+            fid_value = calculate_fid(train_array, gen_array)
+            unconditional_fid_values.append(fid_value)
+            print(f"FID values {fid_value} on {d}ern hemisphere (over {args.num_samples} samples).")
+        print(f"Average FID is {np.mean(unconditional_fid_values)}")
+    else:
+        labels = train_dataset.target
+        unique_labels = np.unique(labels)
+        for label in unique_labels:
+            conditional_fid_values = []
+            for d in ['north','south']:
+                train_array = train_arrays[d][labels == label][:args.num_samples]
+                gen_array = gen_arrays[d][labels == label][:args.num_samples]
+                num_samples = min(len(train_array), len(gen_array), args.num_samples_per_class)
+                if num_samples < 2:
+                    print(f"Skipping label {label} due to insufficient samples.")
+                    continue
+                fid_value = calculate_fid(train_array, gen_array)
+                conditional_fid_values.append(fid_value)
+                print(f"FID values {fid_value} for class {label} on {d}ern hemisphere (over {args.num_samples} samples).")
+            class_FID = np.mean(conditional_fid_values)
+            unconditional_fid_values.append(class_FID)
+            print(f"Average FID for class {label} is {class_FID}")
+        print(f"Average FID (across classes) is {np.mean(unconditional_fid_values)}")
+        
+
+            
+
+
+if __name__ == "__main__":
+    # Default args here will train DiT-XL/2 with the hyperparameters we used in our paper (except training iters).
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--data-path", type=str, required=False, default="")
+    parser.add_argument("--results-dir", type=str, default="results")
+    parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-B/2")
+    parser.add_argument("--image-size", type=int, default=(90,180))
+    parser.add_argument("--num-classes", type=int, default=1000)
+    parser.add_argument("--epochs", type=int, default=2000)
+    parser.add_argument("--global-batch-size", type=int, default=256)
+    parser.add_argument("--global-seed", type=int, default=0)
+    parser.add_argument("--vae", type=str, choices=["ema", "mse"], default="ema")  # Choice doesn't affect training
+    parser.add_argument("--num-workers", type=int, default=4)
+    parser.add_argument("--log-every", type=int, default=10)
+    parser.add_argument("--ckpt-every", type=int, default=10)
+    args = parser.parse_args()
+    main(args)

@@ -107,12 +107,19 @@ def main(args):
     logger = create_logger(experiment_path if rank == 0 else None)
 
     model = DiT_models[args.model](input_size=args.image_size, num_classes=args.num_classes)
+    cur_epoch = args.cur_epoch
+    if args.resume_from_ckpt is not None:
+        ckpt = torch.load(args.resume_from_ckpt)
+        model.load_state_dict(ckpt['model'])
     model = DDP(model.to(device), device_ids=[rank])
     ema = deepcopy(model.module).to(device)
     requires_grad(ema, False)
 
     diffusion = create_diffusion(timestep_respacing="")
     opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
+    if args.resume_from_ckpt is not None:
+        opt.load_state_dict(ckpt["opt"])
+
 
     #ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
     train_filepath = "./data/2011_t2m_era5_2deg.nc"
@@ -142,7 +149,7 @@ def main(args):
     logger.info("Starting training...")
     steps, running_loss, start = 0, 0, time()
 
-    for epoch in range(args.epochs):
+    for epoch in range(args.cur_epoch,args.epochs):
         train_sampler.set_epoch(epoch)
         for i, (x, y) in enumerate(train_loader):
             x, y = x.to(device), y.to(device)
@@ -194,6 +201,8 @@ if __name__ == "__main__":
     parser.add_argument("--vae", type=str, choices=["ema", "mse"], default="ema")  # Choice doesn't affect training
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--log-every", type=int, default=10)
-    parser.add_argument("--ckpt-every", type=int, default=10)
+    parser.add_argument("--ckpt-every", type=int, default=500)
+    parser.add_argument("--cur_epoch", type=int, default=0)
+    parser.add_argument("--resume_from_ckpt", type=str, default=None)
     args = parser.parse_args()
     main(args)

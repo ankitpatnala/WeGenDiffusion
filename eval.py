@@ -1,5 +1,8 @@
 import numpy as np
 from scipy import linalg
+import argparse
+from prepare_test_data import load_gen_arrays
+from train import NetCDFDataset
 
 def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     """Numpy implementation of the Frechet Distance.
@@ -95,18 +98,22 @@ def split_region(input):
 
 def main(args):
     train_dataset = NetCDFDataset(args.train_filepath)
-    train_array = np.array(train_dataset.data['t2m'].values)
-    gen_array = load_gen_array(args.gen_filepath) #TODO To be implemented by Daniele
+    train_array = np.array(train_dataset.data['t2m'].values)[:args.num_samples]
+    gen_array = load_gen_arrays(args.gen_filepath, n_files=args.num_samples) 
 
-    #TODO: split the y axis
+    print(f'Successfully loaded dataset of size {gen_array.shape} and generated dataset of size {gen_array.shape}')
+
     train_array_north, train_array_south = split_region(train_array)
     gen_array_north, gen_array_south = split_region(gen_array)
     train_arrays = {'north': train_array_north, 'south': train_array_south}
     gen_arrays = {'north': gen_array_north, 'south': gen_array_south}
     unconditional_fid_values = {}
 
+    print(f'Successfully split northern and southern hemisphere')
+
     if not args.conditional:
         for d in ['north','south']:
+            print(f'Calculating FID for {d}ern hemisphere...')
             train_array = train_arrays[d][:args.num_samples]
             gen_array = gen_arrays[d][:args.num_samples]
             fid_value = calculate_fid(train_array, gen_array)
@@ -114,44 +121,33 @@ def main(args):
             print(f"FID values {fid_value} on {d}ern hemisphere (over {args.num_samples} samples).")
         print(f"Average FID is {np.mean(unconditional_fid_values)}")
     else:
-        labels = train_dataset.target
+        labels = train_dataset.target[:args.num_samples]
         unique_labels = np.unique(labels)
         for label in unique_labels:
             conditional_fid_values = []
             for d in ['north','south']:
+                print(f"Calculating FID for {d}ern hemisphere and label '{label}'...")
                 train_array = train_arrays[d][labels == label][:args.num_samples]
                 gen_array = gen_arrays[d][labels == label][:args.num_samples]
-                num_samples = min(len(train_array), len(gen_array), args.num_samples_per_class)
+                num_samples = min(len(train_array), len(gen_array), args.num_samples)
                 if num_samples < 2:
-                    print(f"Skipping label {label} due to insufficient samples.")
+                    print(f"Skipping label '{label}' due to insufficient samples.")
                     continue
                 fid_value = calculate_fid(train_array, gen_array)
                 conditional_fid_values.append(fid_value)
-                print(f"FID values {fid_value} for class {label} on {d}ern hemisphere (over {args.num_samples} samples).")
+                print(f"FID values {fid_value} for class '{label}' on {d}ern hemisphere (over {args.num_samples} samples).")
             class_FID = np.mean(conditional_fid_values)
             unconditional_fid_values.append(class_FID)
-            print(f"Average FID for class {label} is {class_FID}")
+            print(f"Average FID for class '{label}' is {class_FID}")
         print(f"Average FID (across classes) is {np.mean(unconditional_fid_values)}")
-        
-
-            
 
 
 if __name__ == "__main__":
     # Default args here will train DiT-XL/2 with the hyperparameters we used in our paper (except training iters).
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--data-path", type=str, required=False, default="")
-    parser.add_argument("--results-dir", type=str, default="results")
-    parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="DiT-B/2")
-    parser.add_argument("--image-size", type=int, default=(90,180))
-    parser.add_argument("--num-classes", type=int, default=1000)
-    parser.add_argument("--epochs", type=int, default=2000)
-    parser.add_argument("--global-batch-size", type=int, default=256)
-    parser.add_argument("--global-seed", type=int, default=0)
-    parser.add_argument("--vae", type=str, choices=["ema", "mse"], default="ema")  # Choice doesn't affect training
-    parser.add_argument("--num-workers", type=int, default=4)
-    parser.add_argument("--log-every", type=int, default=10)
-    parser.add_argument("--ckpt-every", type=int, default=10)
+    parser.add_argument("--train_filepath", type=str, default="", help="Path to the training data file")
+    parser.add_argument("--gen_filepath", type=str, default="", help="Path to the gen data file")
+    parser.add_argument("--conditional", type=bool, default=False, help="Conditional Data?")
+    parser.add_argument("--num_samples", type=int, default=50)
     args = parser.parse_args()
     main(args)

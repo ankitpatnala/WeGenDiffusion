@@ -4,7 +4,7 @@ import os
 from glob import glob
 import random
 
-def load_gen_arrays(path, extension, n_files):
+def load_gen_arrays(path, extension=".npy", n_files=100):
     """
     Load n random .npy or .png files from a folder and stack them into one numpy array.
 

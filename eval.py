@@ -98,7 +98,7 @@ def split_region(input):
 
 def main(args):
     train_dataset = NetCDFDataset(args.train_filepath)
-    train_array = np.array(train_dataset.data['t2m'].values)[:args.num_samples]
+    train_array = np.array(train_dataset.data['t2m'].values)
     gen_array = load_gen_arrays(args.gen_filepath, n_files=args.num_samples) 
 
     print(f'Successfully loaded dataset of size {gen_array.shape} and generated dataset of size {gen_array.shape}.')
@@ -115,19 +115,22 @@ def main(args):
             print(f'Calculating FID for {d}...')
             train_array = train_arrays[d][:args.num_samples]
             gen_array = gen_arrays[d][:args.num_samples]
+            #TODO: check that label is not processes
             fid_value = calculate_fid(train_array, gen_array)
             unconditional_fid_values.append(fid_value)
             print(f"FID values {fid_value} for {d} (over {args.num_samples} samples).")
         print(f"Average FID is {np.mean(unconditional_fid_values)}")
     else:
-        labels = train_dataset.target[:args.num_samples]
-        unique_labels = np.unique(labels)
-        for label in unique_labels:
+        train_labels = train_dataset.target
+        #TODO: check that there is a label and extract it this is work in progress
+        gen_labels = gen_array[-1]
+        unique_train_labels = np.unique(train_labels)
+        for label in unique_train_labels:
             conditional_fid_values = []
             for d in ['europe','tropics']:
                 print(f"Calculating FID for {d} and label '{label}'...")
-                train_array = train_arrays[d][labels == label][:args.num_samples]
-                gen_array = gen_arrays[d][labels == label][:args.num_samples]
+                train_array = train_arrays[d][train_labels == label]
+                gen_array = gen_arrays[d][gen_labels == label][:args.num_samples]
                 num_samples = min(len(train_array), len(gen_array), args.num_samples)
                 if num_samples < 2:
                     print(f"Skipping label '{label}' due to insufficient samples.")

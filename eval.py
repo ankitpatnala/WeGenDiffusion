@@ -88,54 +88,64 @@ def calculate_fid(real_samples, generated_samples):
     fid_value = calculate_frechet_distance(mu1, sigma1, mu2, sigma2)
     return fid_value
 
-def split_region(input):
+def split_region(input, regions=['europe', 'tropics']):
     """
     split the dataset along latitude, North/South
     """
-    europe=input[:,20:30,75:145]
-    tropics=input[:,33:66,:]
-    return europe, tropics
+    output = {}
+    for region in regions:
+        if region == 'europe':
+            output[region] = input[:,20:30,75:145]
+        elif region == 'tropics':
+            output[region] = input[:,33:66,:]
+        else:
+            raise ValueError(f"Region {region} not recognized. Supported regions are 'europe' and 'tropics'.")
+    return output
 
 def main(args):
-    train_dataset = NetCDFDataset(args.train_filepath)
-    train_array = np.array(train_dataset.data['t2m'].values)
-    gen_array = load_gen_arrays(args.gen_filepath, n_files=args.num_samples) 
+    val_dataset = NetCDFDataset(args.val_filepath, labels=args.label)
+    val_array = np.array(val_dataset.data['t2m'].values)
+    # gen_array = load_gen_arrays(args.gen_filepath, n_files=args.num_samples) 
 
-    print(f'Successfully loaded dataset of size {gen_array.shape} and generated dataset of size {gen_array.shape}.')
-    train_array_europe, train_array_tropics = split_region(train_array)
-    gen_array_europe, gen_array_tropics = split_region(gen_array)
-    train_arrays = {'europe': train_array_europe, 'tropics': train_array_tropics}
-    gen_arrays = {'europe': gen_array_europe, 'tropics': gen_array_tropics}
+    # print(f'Successfully loaded dataset of size {gen_array.shape} and generated dataset of size {gen_array.shape}.')
+    val_arrays = split_region(val_array, args.regions)
+    # gen_array_europe, gen_array_tropics = split_region(gen_array)
+    # gen_arrays = {'europe': gen_array_europe, 'tropics': gen_array_tropics}
     unconditional_fid_values = []
 
     print(f'Successfully split northern and southern hemisphere.')
 
     if not args.conditional:
-        for d in ['europe','tropics']:
+        gen_array = load_gen_arrays(args.gen_filepath, n_files=args.num_samples) 
+        gen_arrays = split_region(gen_array, args.regions)
+
+        for d in args.regions:
             print(f'Calculating FID for {d}...')
-            train_array = train_arrays[d][:args.num_samples]
+            val_array = val_arrays[d][:args.num_samples]
             gen_array = gen_arrays[d][:args.num_samples]
             #TODO: check that label is not processes
-            fid_value = calculate_fid(train_array, gen_array)
+            fid_value = calculate_fid(val_array, gen_array)
             unconditional_fid_values.append(fid_value)
             print(f"FID values {fid_value} for {d} (over {args.num_samples} samples).")
         print(f"Average FID is {np.mean(unconditional_fid_values)}")
     else:
-        train_labels = train_dataset.target
+        val_labels = val_dataset.target
         #TODO: check that there is a label and extract it this is work in progress
-        gen_labels = gen_array[-1]
-        unique_train_labels = np.unique(train_labels)
-        for label in unique_train_labels:
+        unique_val_labels = np.unique(val_labels)
+        print(f'unique val labels are: {unique_val_labels}')
+        for label in unique_val_labels:
             conditional_fid_values = []
-            for d in ['europe','tropics']:
+            for d in args.regions:
                 print(f"Calculating FID for {d} and label '{label}'...")
-                train_array = train_arrays[d][train_labels == label]
-                gen_array = gen_arrays[d][gen_labels == label][:args.num_samples]
-                num_samples = min(len(train_array), len(gen_array), args.num_samples)
+                val_array = val_arrays[d][val_labels == label]
+                gen_array = load_gen_arrays(args.gen_filepath, n_files=args.num_samples, class_label=int(label))
+                gen_arrays = split_region(gen_array, args.regions)
+                gen_array = gen_arrays[d]
+                num_samples = min(len(val_array), len(gen_array), args.num_samples)
                 if num_samples < 2:
                     print(f"Skipping label '{label}' due to insufficient samples.")
                     continue
-                fid_value = calculate_fid(train_array, gen_array)
+                fid_value = calculate_fid(val_array, gen_array)
                 conditional_fid_values.append(fid_value)
                 print(f"FID values {fid_value} for class '{label}' for {d} (over {args.num_samples} samples).")
             class_FID = np.mean(conditional_fid_values)
@@ -147,7 +157,9 @@ def main(args):
 if __name__ == "__main__":
     # Default args here will train DiT-XL/2 with the hyperparameters we used in our paper (except training iters).
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_filepath", type=str, default="", help="Path to the training data file")
+    parser.add_argument("--val_filepath", type=str, default="", help="Path to the training data file")
+    parser.add_argument("--regions", type=list, default=['europe'], help="Regions from europe and tropics")
+    parser.add_argument("--label", type=str, default=None, help="label")
     parser.add_argument("--gen_filepath", type=str, default="", help="Path to the gen data file")
     parser.add_argument("--conditional", type=bool, default=False, help="Conditional Data?")
     parser.add_argument("--num_samples", type=int, default=50)

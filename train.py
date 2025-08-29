@@ -39,12 +39,15 @@ import json
 class NetCDFDataset(Dataset):
     def __init__(self, data_filepath, labels=None, variables=["t2m"]):#, mean, std):
         #self.data = (data - mean) / std
-        self.data = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
+        self.data = xr.open_dataset("./data/2012_t2m_era5_4months_2deg.nc")
         self.mean = self.data.mean()
         self.std = self.data.std()
         self.vars = variables
         if labels is None:
             self.target = np.zeros(len(self.data['valid_time']))
+        #elif labels == 'season':
+            #extract the month from the time variable
+        #    self.target = self.data['valid_time'].values
         else:
             pass
     def __getitem__(self, index):
@@ -116,7 +119,9 @@ def main(args):
 
     #ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
     train_filepath = "./data/2011_t2m_era5_2deg.nc"
-    #ds_train = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
+    ds_train = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
+    print(ds_train)
+    exit()
     train_dataset = NetCDFDataset(train_filepath)
 
     train_sampler = DistributedSampler(

@@ -1,7 +1,9 @@
 import numpy as np
-from scipy import linalg
+#from scipy import linalg
 import argparse
 from prepare_test_data import load_gen_arrays
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 from train import NetCDFDataset
 
 def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
@@ -88,27 +90,44 @@ def calculate_fid(real_samples, generated_samples):
     fid_value = calculate_frechet_distance(mu1, sigma1, mu2, sigma2)
     return fid_value
 
-def split_region(input, regions=['europe', 'tropics']):
+def split_region(input, regions=['europe', 'tropics'], plot_slice=False):
     """
     split the dataset along latitude, North/South
     """
+    input = np.flip(input, axis=1)
     output = {}
     for region in regions:
         if region == 'europe':
-            output[region] = input[:,20:30,75:145]
+           # input[:, :35, 75:125], input[:, -25:, 75:125]]
+            start = (0, 75)
+            end = (35, 125)
         elif region == 'tropics':
-            output[region] = input[:,33:66,:]
+            start = (33, 0)
+            end = (66, input.shape[2])
         else:
             raise ValueError(f"Region {region} not recognized. Supported regions are 'europe' and 'tropics'.")
+        output[region] = input[:, start[0]:end[0], start[1]:end[1]]
+        if plot_slice:
+            fig, ax = plt.subplots()
+            ax.imshow(input[0,:,:], interpolation='nearest')
+            rect = Rectangle((start[1], start[0]), end[1]-start[1], end[0]-start[0], linewidth=1, edgecolor='r', facecolor='none')
+            ax.add_patch(rect)
+            plt.savefig(f'global_{region}.png')
+            fig, ax = plt.subplots()
+            ax.imshow(output[region][0,:,:], interpolation='nearest')
+            plt.savefig(f'slice_{region}.png')
+            
     return output
 
 def main(args):
     val_dataset = NetCDFDataset(args.val_filepath, labels=args.label)
     val_array = np.array(val_dataset.data['t2m'].values)
+
     # gen_array = load_gen_arrays(args.gen_filepath, n_files=args.num_samples) 
 
     # print(f'Successfully loaded dataset of size {gen_array.shape} and generated dataset of size {gen_array.shape}.')
-    val_arrays = split_region(val_array, args.regions)
+    val_arrays = split_region(val_array, args.regions, True)
+    exit()
     # gen_array_europe, gen_array_tropics = split_region(gen_array)
     # gen_arrays = {'europe': gen_array_europe, 'tropics': gen_array_tropics}
     unconditional_fid_values = []

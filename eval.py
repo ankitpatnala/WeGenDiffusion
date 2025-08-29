@@ -4,6 +4,7 @@ import argparse
 from prepare_test_data import load_gen_arrays
 from train import NetCDFDataset
 
+
 def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     """Numpy implementation of the Frechet Distance.
     The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)

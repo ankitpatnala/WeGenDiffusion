@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=dit_sample
-#SBATCH --time=00:30:00
+#SBATCH --time=01:30:00
 #SBATCH --account=training2533
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
@@ -32,4 +32,4 @@ master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_ADDR=${master_addr}
 
 #run the python file
-srun --overlap python sample_custom.py
+srun --overlap python sample_rollouts.py

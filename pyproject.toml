@@ -20,6 +20,7 @@ dependencies = [
     "matplotlib",
     "cartopy>=0.21.1",
     "ipykernel>=6.29.5",
+    "seaborn>=0.13.2",
 ]
 
 

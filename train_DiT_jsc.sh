@@ -30,5 +30,6 @@ export MASTER_ADDR=${master_addr}
 
 echo "Start time: $(date +%T)"
 srun --overlap python train.py --global-batch-size 4 --epochs=250 --labels=$1 --load-from-checkpoint ./results/DiT-B-2_previous_state/ckpt_0000050.pt --diffusion-steps=500
+# srun --overlap python train.py --global-batch-size 4 --epochs=250 --labels=$1 --load-from-checkpoint ./results/DiT-B-2_season/ckpt_0000030.pt --diffusion-steps=500
 echo "End time: $(date +%T)"
 

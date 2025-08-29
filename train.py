@@ -66,7 +66,7 @@ class NetCDFDataset(Dataset):
             self.target = extract_month(self.data)
         elif self.labels == "season":
             self.target = extract_season(self.data)
-            print(self.target)
+            # print(self.target)
         else:
             pass
     def __getitem__(self, index):
@@ -79,7 +79,7 @@ class NetCDFDataset(Dataset):
                         for var in self.vars])
         else:
             y = torch.tensor(self.target[index], dtype=torch.long)
-            print(y)
+            # print(y)
 
         return x, y
     def __len__(self):
@@ -140,10 +140,13 @@ def main(args):
                 i += 1
             path_res = path_res + f"_{i}"
         experiment_path = path_res
+        print(experiment_path)
         os.makedirs(experiment_path, exist_ok=True)
+         # save args to experiment_path
+        with open(os.path.join(experiment_path, "args.json"), "w") as f:
+            json.dump(args.__dict__, f)
     else:
         experiment_path = None
-
     logger = create_logger(experiment_path if rank == 0 else None)
 
     model = DiT_models[args.model](input_size=args.image_size, num_classes=args.num_classes, labels=args.labels)

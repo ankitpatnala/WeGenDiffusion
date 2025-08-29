@@ -36,6 +36,10 @@ import numpy as np
 from init_ddp import init_distributed_mode
 import json
 
+def extract_month(dates):
+    # convert to np array first because xarray does something else in the typecasts
+    return np.array(dates).astype('datetime64[M]').astype(int) % 12
+
 class NetCDFDataset(Dataset):
     def __init__(self, data_filepath, labels=None, variables=["t2m"]):#, mean, std):
         #self.data = (data - mean) / std
@@ -45,6 +49,8 @@ class NetCDFDataset(Dataset):
         self.vars = variables
         if labels is None:
             self.target = np.zeros(len(self.data['valid_time']))
+        elif labels == 'month':
+            self.target = extract_month(self.data['valid_time'])
         else:
             pass
     def __getitem__(self, index):
@@ -124,7 +130,7 @@ def main(args):
     #ds_train = xr.open_dataset("/fast/project/HFMI_HClimRep/nishant.kumar/dit_hackathon/data/2011_t2m_era5_2deg.nc")
     train_filepath = "./data/2011_t2m_era5_2deg.nc"
     #ds_train = xr.open_dataset("./data/2011_t2m_era5_2deg.nc")
-    train_dataset = NetCDFDataset(train_filepath)
+    train_dataset = NetCDFDataset(train_filepath, 'month')
 
     train_sampler = DistributedSampler(
         train_dataset, 

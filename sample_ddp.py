@@ -57,11 +57,11 @@ def save_sample(
         temp_min (float): Minimum temperature for colormap scaling.
         temp_max (float): Maximum temperature for colormap scaling.
     """
-    os.makedirs(os.path.dirname(path_prefix), exist_ok=True)
-    sample = sample.cpu()
+    #os.makedirs(os.path.dirname(path_prefix), exist_ok=True)
+    #sample = sample.cpu()
 
-    for i in range(sample.size(0)):
-        img_tensor = sample[i]  # (C, H, W)
+    for i in range(1):
+        img_tensor = sample  # (C, H, W)
 
         # Save raw tensor
         if save_npy:
@@ -69,13 +69,14 @@ def save_sample(
 
         # Save PNG with map
         if save_png:
-            img_np = img_tensor.numpy()
+            img_np = img_tensor
             if img_np.shape[0] == 1:
                 img_np = img_np[0]  # (H, W)
             else:
                 img_np = np.mean(img_np, axis=0)  # (H, W)
 
             # Generate lat/lon grid
+            print(img_np.shape)
             h, w = img_np.shape
             lons = np.linspace(lon_range[0], lon_range[1], w)
             lats = np.linspace(lat_range[0], lat_range[1], h)

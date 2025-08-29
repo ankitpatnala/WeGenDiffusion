@@ -5,6 +5,7 @@ from prepare_test_data import load_gen_arrays
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from train import NetCDFDataset
+from sample_ddp import save_sample
 
 def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     """Numpy implementation of the Frechet Distance.
@@ -98,9 +99,9 @@ def split_region(input, regions=['europe', 'tropics'], plot_slice=False):
     output = {}
     for region in regions:
         if region == 'europe':
-           # input[:, :35, 75:125], input[:, -25:, 75:125]]
-            start = (0, 75)
-            end = (35, 125)
+           # input[:,50:75,0:20]
+            start = (5, 0)
+            end = (30, 20)
         elif region == 'tropics':
             start = (33, 0)
             end = (66, input.shape[2])
@@ -110,6 +111,10 @@ def split_region(input, regions=['europe', 'tropics'], plot_slice=False):
         if plot_slice:
             fig, ax = plt.subplots()
             ax.imshow(input[0,:,:], interpolation='nearest')
+            
+            highlight_input = input.copy()
+            highlight_input[:, start[0]:end[0], start[1]:end[1]] *= 1.5
+            save_sample(np.flip(highlight_input[0:1,:,:], axis=1), 'test', save_npy=False, colormap='viridis')
             rect = Rectangle((start[1], start[0]), end[1]-start[1], end[0]-start[0], linewidth=1, edgecolor='r', facecolor='none')
             ax.add_patch(rect)
             plt.savefig(f'global_{region}.png')
